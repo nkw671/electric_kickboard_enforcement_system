@@ -7,6 +7,8 @@
 
 # 📎초기설정
 
+<br>
+
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**1. 프로젝트 진행할 폴더 생성후 " git clone 링크 . " 명령어로 연결하기**
 
 <br>
@@ -17,6 +19,8 @@
 
 
 # ❗규칙
+
+<br>
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**1. 모든 기능은 브랜치를 생성하여 구현 후 merge 하기(main에 다이렉트로 merge X)**
 
