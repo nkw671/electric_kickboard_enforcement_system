@@ -27,14 +27,12 @@
 <br>
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**2. 브랜치명은 파트명/기능명 으로 명명**
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;> **예시:) AI/kickboard_detection**
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**예시:) AI/kickboard_detection**
 
 <br>
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**3. commit 시 변경사항/구현한 기능을 메세지에 적어주세요**
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;> **예시:) 킥보드 인식 기능 추가**
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**예시:) 킥보드 인식 기능 추가**
 
 <br>
 
@@ -48,7 +46,7 @@
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![코딩컨벤션](https://github.com/user-attachments/assets/4942c736-d296-4348-865a-d3459c8128ec)
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;>은디비 수업자료에서 발췌
+> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;은디비 수업자료에서 발췌
 
 <br>
 
