@@ -15,3 +15,6 @@
 
 3.모든 함수/클래스 등 기능에 주석달기
 
+![메인 화면](https://github.com/user-attachments/assets/4942c736-d296-4348-865a-d3459c8128ec)
+
+-은소공 수업자료에서 발췌
