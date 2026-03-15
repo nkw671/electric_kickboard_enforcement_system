@@ -1,4 +1,4 @@
-# electronic_kickboard_enforcement_system
+# electric_kickboard_enforcement_system
 전동킥보드 단속 시스템 구현
 
 ![로직](https://github.com/user-attachments/assets/d9fa42e2-6482-4a90-8400-b14e1bd16b89)
