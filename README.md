@@ -36,11 +36,11 @@
 
 <br>
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**5 연동 오류 등 문제가 생겼을 시 issue 탭 활용하기**
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**4. 연동 오류 등 문제가 생겼을 시 issue 탭 활용하기**
 
 <br>
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**4. 모든 함수/클래스 등 기능에 주석달기**
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**5. 모든 함수/클래스 등 기능에 주석달기**
 
 <br>
 
