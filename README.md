@@ -31,7 +31,7 @@
 
 <br>
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**3. commit 시 변경사항/구현한 기능을 메세지에 적어주세요**
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**3. commit 시 변경사항/구현한 기능을 메세지에 적기**
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**예시:) 킥보드 인식 기능 추가**
 
 <br>
