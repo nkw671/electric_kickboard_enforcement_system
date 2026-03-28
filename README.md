@@ -1,16 +1,168 @@
-# React + Vite
+# 전동킥보드 단속 시스템 - 프론트엔드
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## 기술 스택
 
-Currently, two official plugins are available:
+| 항목 | 기술 |
+|------|------|
+| 프레임워크 | React 18 (Vite) |
+| 라우팅 | React Router v6 |
+| HTTP 통신 | Fetch API |
+| 스타일 | CSS Module |
+| 언어 | JavaScript (JSX) |
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## 로컬 실행 방법
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+# 패키지 설치
+npm install
 
-## Expanding the ESLint configuration
+# 개발 서버 실행 (http://localhost:5173)
+npm run dev
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+---
+
+## 폴더 구조
+
+```
+src/
+├── main.jsx              # 앱 시작점, BrowserRouter 설정
+├── App.jsx               # URL에 따라 페이지 연결 (라우팅)
+├── App.css               # 전역 스타일 (배경색, 폰트)
+├── index.css             # 기본 초기화 스타일
+├── constants.js          # 공용 상수 (위반 유형, 색상)
+├── utils.js              # 공용 함수 (타임스탬프 파싱 등)
+│
+├── data/
+│   └── dummyData.js      # 백엔드 연결 전 테스트용 더미 데이터
+│
+├── hooks/
+│   └── useApi.js         # API 폴링 훅 (3초마다 백엔드 호출)
+│
+├── components/           # 여러 페이지에서 공통으로 사용하는 컴포넌트
+│   ├── Layout.jsx        # 전체 레이아웃 틀 (헤더 + 네비게이션)
+│   ├── Layout.module.css
+│   ├── StatCard.jsx      # 통계 카드 컴포넌트 (숫자 + 라벨)
+│   └── StatCard.module.css
+│
+└── pages/                # 실제 화면 페이지
+    ├── MainPage.jsx          # 메인 페이지
+    ├── MainPage.module.css
+    ├── ViolationsPage.jsx    # 위반 기록 페이지
+    └── ViolationsPage.module.css
+```
+
+---
+
+## 페이지 구성
+
+### 메인 페이지 (`/`)
+
+```
+┌─────────────────────────────────────────────┐
+│  실시간 영상 스트림          실시간 위반 알림  │
+│  (YOLO 처리된 영상)         헬멧미착용 CAM-01 │
+│                             인도주행  CAM-02  │
+├──────────┬──────────┬──────────┬────────────┤
+│ 오늘 위반 │ 헬멧미착용│ 인도주행  │ 다인탑승   │
+│   12건   │   7건    │   3건    │   2건      │
+└──────────┴──────────┴──────────┴────────────┘
+```
+
+- 영상 스트림 영역: AI 서버에서 처리된 실시간 영상 출력 (백엔드 연결 후 활성화)
+- 실시간 위반 알림 피드: 최근 감지된 위반 목록 표시
+- 통계 카드: 오늘 발생한 위반 건수를 유형별로 표시
+
+### 위반 기록 페이지 (`/violations`)
+
+```
+┌─────────────────────────────────────────────┐
+│  [전체] [헬멧 미착용] [인도 주행] [다인 탑승] │
+├──────┬────────────────┬────────┬────────────┤
+│ 번호 │ 일시           │ 위반   │ 카메라     │
+├──────┼────────────────┼────────┼────────────┤
+│  #1  │ 14:32:01       │ 헬멧   │ CAM-01     │
+│  #2  │ 14:28:55       │ 인도   │ CAM-02     │
+└──────┴────────────────┴────────┴────────────┘
+```
+
+- 필터 버튼: 위반 유형별로 목록 필터링
+- 위반 목록 테이블: 전체 위반 기록 표시
+- 상세 모달: 보기 버튼 클릭 시 캡처 이미지 + 상세 정보 팝업 (ESC로 닫기)
+
+---
+
+## 데이터 흐름
+
+### 현재 (더미 데이터)
+```
+dummyData.js → 각 페이지 → 화면 출력
+```
+
+### 백엔드 연결 후
+```
+백엔드 서버 → useApi.js (3초마다 호출) → 각 페이지 → 화면 출력
+```
+
+---
+
+## 백엔드 연결 방법
+
+### 1. 환경변수 설정
+프로젝트 루트에 `.env` 파일 생성
+```
+VITE_API_URL=http://백엔드서버주소
+```
+
+### 2. 주석 해제
+
+**MainPage.jsx**
+```jsx
+// 아래 주석 해제 후 더미 데이터 제거
+const { data: violations, connected } = useApi('/api/violations?limit=10')
+const { data: stats } = useApi('/api/stats')
+```
+
+**영상 스트림**
+```jsx
+// 아래 img 태그 주석 해제
+<img src="http://AI서버주소/stream" className={styles.stream} alt="stream" />
+```
+
+---
+
+## 백엔드 API 명세 (프론트 기준)
+
+### 위반 목록
+```
+GET /api/violations
+
+응답 예시:
+[
+  {
+    "id": 1,
+    "type": "헬멧 미착용",     ← 반드시 이 문자열 그대로
+    "camera": "CAM-01",
+    "timestamp": "2025-03-28 14:32:01",
+    "confidence": 94,
+    "image_url": "http://..."
+  }
+]
+```
+
+### 통계
+```
+GET /api/stats
+
+응답 예시:
+{
+  "total": 12,
+  "helmet": 7,
+  "sidewalk": 3,
+  "multiRider": 2
+}
+```
+
+> **주의:** `type` 필드값은 `"헬멧 미착용"`, `"인도 주행"`, `"다인 탑승"` 중 하나여야 색상이 정상 적용됩니다.
