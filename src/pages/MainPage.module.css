@@ -1,0 +1,172 @@
+.status {
+  text-align: center;
+  padding: 40px;
+  color: #5a6a85;
+  font-size: 15px;
+}
+
+.statusError {
+  text-align: center;
+  padding: 40px;
+  color: #b91c1c;
+  font-size: 15px;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* 상단: 영상 + 피드 */
+.topSection {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .topSection {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 영상 스트림 */
+.streamBox {
+  background-color: #ffffff;
+  border: 1px solid #d0d7e3;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 40, 85, 0.08);
+}
+
+.streamHeader {
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  background-color: #002855;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: 0.5px;
+}
+
+.liveDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: blink 1.4s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.stream {
+  width: 100%;
+  display: block;
+}
+
+.streamPlaceholder {
+  height: 360px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #8a9bb5;
+  font-size: 15px;
+  text-align: center;
+  gap: 8px;
+  background-color: #f5f7fb;
+}
+
+.streamPlaceholder small {
+  font-size: 12px;
+  color: #a0aec0;
+}
+
+/* 실시간 피드 */
+.feedBox {
+  background-color: #ffffff;
+  border: 1px solid #d0d7e3;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 40, 85, 0.08);
+  display: flex;
+  flex-direction: column;
+}
+
+.feedTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+  background-color: #002855;
+  padding: 10px 16px;
+  letter-spacing: 0.5px;
+}
+
+.feedList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  gap: 8px;
+}
+
+.feedItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background-color: #f5f7fb;
+  border: 1px solid #e2e8f0;
+  border-left: 3px solid #002855;
+  border-radius: 2px;
+  font-size: 13px;
+}
+
+.feedBadge {
+  padding: 2px 8px;
+  border-radius: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.feedCamera {
+  color: #5a6a85;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.feedTime {
+  margin-left: auto;
+  color: #8a9bb5;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 통계 카드 */
+.statsSection {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .statsSection {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .statsSection {
+    grid-template-columns: 1fr;
+  }
+}
