@@ -121,3 +121,5 @@ zones.json
 kickboard.v1-test1.yolo26/
 src/1.mp4
 src/test.mp4
+node_modules/
+.vscode/

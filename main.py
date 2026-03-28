@@ -5,7 +5,12 @@ from datetime import datetime
 from ultralytics import YOLO
 from ultralytics.utils.plotting import Annotator, colors as yolo_colors
 from PIL import ImageFont, ImageDraw, Image
-
+# 추가
+from threading import Thread
+from fastapi import FastAPI
+from fastapi.responses import StreamingResponse
+from fastapi.middleware.cors import CORSMiddleware
+import asyncio
 
 # ──────────────────────────────────────────────
 # 설정값
@@ -17,6 +22,7 @@ CONF       = 0.5           # 객체 감지 최소 신뢰도
 COOLDOWN   = 3.0           # 동일 객체 재알림 최소 간격 (초)
 SAVE_PATH  = None  # 결과 영상 저장 경로 (None 이면 저장 안 함)
 ZONE_FILE  = "zones.json"  # Zone 좌표 저장/불러오기 파일 경로
+latest_frame: bytes = b""   # 감지 루프에서 매 프레임 저장
 
 WIN = "Kickboard Zone Monitor"  # OpenCV 창 이름
 
@@ -500,6 +506,8 @@ def main():
         if writer:
             writer.write(frame)   # 결과 프레임을 영상 파일에 저장한다.
 
+        _, buf = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
+        latest_frame = buf.tobytes()  # 최신 프레임을 전역 변수에 저장한다.
         cv2.imshow(WIN, frame)
 
         key = cv2.waitKey(1) & 0xFF
@@ -517,6 +525,43 @@ def main():
     cv2.destroyAllWindows()
     print("[완료]")
 
+# ──────────────────────────────────────────────
+# FastAPI 스트리밍 서버
+# ──────────────────────────────────────────────
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# 함수 이름 : video_stream()
+# 기능      : latest_frame 을 MJPEG 형식으로 실시간 스트리밍한다.
+# 반환값    : StreamingResponse (multipart/x-mixed-replace)
+@app.get("/video/stream")
+async def video_stream():
+    async def generate():
+        while True:
+            if latest_frame:
+                yield (
+                    b"--frame\r\n"
+                    b"Content-Type: image/jpeg\r\n\r\n"
+                    + latest_frame +
+                    b"\r\n"
+                )
+            await asyncio.sleep(0.03)   # 약 30fps
+    return StreamingResponse(
+        generate(),
+        media_type="multipart/x-mixed-replace; boundary=frame"
+    )
 
 if __name__ == "__main__":
-    main()
+    import uvicorn
+
+    # 감지 루프를 별도 스레드에서 실행한다. (OpenCV 창 + 감지 유지)
+    Thread(target=main, daemon=True).start()
+
+    # FastAPI 서버를 실행한다.
+    uvicorn.run(app, host="0.0.0.0", port=8000)
