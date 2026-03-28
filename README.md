@@ -17,6 +17,22 @@
 
 <br>
 
+# ❗❗❗.gitignore 설정법
+
+<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**.gitignore은 git이 특정 파일을 추적하지 못하게 할때 사용합니다.**
+
+<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**gitignore 설정을 하지 않으면 설정 파일이 섞여들어가 다른 사람 컴퓨터에서는 깨지는 현상이 나타난다고 합니다.**
+
+<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**(https://www.toptal.com/developers/gitignore) 해당 링크로 들어가셔서 개발 환경을 입력하면 자동으로 예외처리할 파일들 목록을 생성해줍니다. 복사한다음 .gitignore 파일에 붙여넣기 하면 설정됩니다.**
+
+<br>
+
 
 # ❗규칙
 
