@@ -31,7 +31,7 @@ spring.datasource.password=본인의_DB_비밀번호
 
 ### 2\. 프로젝트 실행
 
-IntelliJ IDEA에서 `BackApplication.java`의 `main` 메서드를 실행하거나, 터미널에서 아래 명령어를 입력합니다.
+IntelliJ IDEA에서 `BackApplication.java`의 `main` 메서드를 실행하거나, `gradlew` 파일이 존재하는 프로젝트 최상위 폴더에서 터미널을 열고 아래 명령어를 입력합니다.
 
 ```bash
 # 서버 실행 (http://localhost:8080)
