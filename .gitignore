@@ -118,3 +118,4 @@ fabric.properties
 temp/
 training_data/
 zones.json
+kickboard.v1-test1.yolo26/

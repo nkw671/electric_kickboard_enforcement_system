@@ -21,11 +21,12 @@ from PIL import ImageFont, ImageDraw, Image
 # ──────────────────────────────────────────────
 # 설정값
 # ──────────────────────────────────────────────
+
 SOURCE     = "1.mp4"       # 입력 영상 경로 (웹캠은 0)
-MODEL_PATH = "best_v3.pt"  # YOLO 모델 가중치 경로
+MODEL_PATH = "src/best_v3.pt"  # YOLO 모델 가중치 경로
 CONF       = 0.5           # 객체 감지 최소 신뢰도
 COOLDOWN   = 3.0           # 동일 객체 재알림 최소 간격 (초)
-SAVE_PATH  = "none"  # 결과 영상 저장 경로 (None 이면 저장 안 함)
+SAVE_PATH  = None  # 결과 영상 저장 경로 (None 이면 저장 안 함)
 ZONE_FILE  = "zones.json"  # Zone 좌표 저장/불러오기 파일 경로
 
 WIN = "Kickboard Zone Monitor"  # OpenCV 창 이름
