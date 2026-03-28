@@ -1,68 +1,139 @@
-# electric_kickboard_enforcement_system
-전동킥보드 단속 시스템 구현
+# 전동킥보드 단속 시스템 - 백엔드
 
-![로직](https://github.com/user-attachments/assets/d9fa42e2-6482-4a90-8400-b14e1bd16b89)
+## 기술 스택
 
-<br>
+| 항목 | 기술 |
+|------|------|
+| 언어 | Java 17 |
+| 프레임워크 | Spring Boot 4.0 |
+| 빌드 도구 | Gradle (Groovy) |
+| 데이터베이스 | MySQL 8.0, Spring Data JPA |
+| 라이브러리 | Lombok |
+| API 문서화 | Swagger (Springdoc OpenAPI) |
 
-# 📎초기설정
+-----
 
-<br>
+## 로컬 실행 방법
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**1. 프로젝트 진행할 폴더 생성후 " git clone 링크 . " 명령어로 연결하기**
+### 1\. 환경 설정 (MySQL)
 
-<br>
+로컬 환경에 MySQL 서버가 설치되어 있어야 하며, 아래 정보로 접속 가능해야 합니다.
+(데이터베이스(`kickboard`)와 테이블은 서버 실행 시 `hibernate.ddl-auto=update` 옵션에 의해 자동 생성 및 갱신됩니다.)
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**2. 브랜치 만들고 작업시작하기**
+`src/main/resources/application.properties` 확인:
 
-<br>
+```properties
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.datasource.url=jdbc:mysql://localhost:3306/kickboard?createDatabaseIfNotExist=true&serverTimezone=Asia/Seoul
+spring.datasource.username=root
+spring.datasource.password=본인의_DB_비밀번호
+```
 
-# ❗❗❗.gitignore 설정법
+### 2\. 프로젝트 실행
 
-<br>
+IntelliJ IDEA에서 `BackApplication.java`의 `main` 메서드를 실행하거나, 터미널에서 아래 명령어를 입력합니다.
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**.gitignore은 git이 특정 파일을 추적하지 못하게 할때 사용합니다.**
+```bash
+# 서버 실행 (http://localhost:8080)
+./gradlew bootRun
+```
 
-<br>
+-----
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**gitignore 설정을 하지 않으면 설정 파일이 섞여들어가 다른 사람 컴퓨터에서는 깨지는 현상이 나타난다고 합니다.**
+## 폴더 구조
 
-<br>
+```text
+src/main/java/com/kickboard/back/
+├── BackApplication.java          # 스프링 부트 앱 시작점
+│
+├── controller/                   # API 엔드포인트 및 HTTP 요청 처리
+│   └── ViolationRecordController.java
+│
+├── service/                      # 비즈니스 로직 및 데이터 가공
+│   └── ViolationRecordService.java
+│
+├── repository/                   # DB 접근 및 쿼리 실행 (Spring Data JPA)
+│   └── ViolationRecordRepository.java
+│
+├── entity/                       #  DB 테이블과 1:1 매핑되는 엔티티
+│   └── ViolationRecord.java
+│
+└── dto/                          # AI, 프론트와 주고받는 데이터 전송 객체
+    ├── ViolationCreateRequest.java   # AI -> Back 수신용 DTO
+    └── ViolationResponse.java        # Back -> Front 송신용 DTO
+```
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**(https://www.toptal.com/developers/gitignore) 해당 링크로 들어가셔서 개발 환경을 입력하면 자동으로 예외처리할 파일들 목록을 생성해줍니다. 복사한다음 .gitignore 파일에 붙여넣기 하면 설정됩니다.**
+-----
 
-<br>
+## 데이터 흐름
 
+```text
+[ AI 영상 분석 서버 ]
+        │ (POST JSON: 위반 유형, 사진 URL, 카메라 번호, 신뢰도)
+        ▼
+[ Controller ] ──(DTO)──▶ [ Service ] ──(Entity)──▶ [ Repository ]
+                                                         │
+                                                         ▼
+[ 프론트엔드 웹 ] ◀──(DTO)── [ Service ] ◀──(Entity)── [ MySQL DB ]
+        (GET JSON: 위반 목록, 통계)
+```
 
-# ❗규칙
+-----
 
-<br>
+## API 명세서
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**1. 모든 기능은 브랜치를 생성하여 구현 후 merge 하기(main에 다이렉트로 merge X)**
+서버 실행 후 아래 주소로 접속하면, 브라우저에서 직접 API를 테스트하고 전체 명세를 확인할 수 있습니다.
 
-<br>
+**[Swagger UI 접속: http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)**
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**2. 브랜치명은 파트명/기능명 으로 명명**
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**예시:) AI/kickboard_detection**
+### 1\. 단속 데이터 수신 (AI -\> Back)
 
-<br>
+AI 서버에서 감지한 위반 데이터를 DB에 저장합니다.
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**3. commit 시 변경사항/구현한 기능을 메세지에 적기**
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**예시:) 킥보드 인식 기능 추가**
+  * **URL:** `POST /api/violations`
+  * **Request Body (JSON):**
+    ```json
+    {
+      "type": "헬멧 미착용",
+      "image_url": "https://example.com/images/helmet_001.jpg",
+      "camera": "CAM-01",
+      "confidence": 94
+    }
+    ```
+  * **Response:** `200 OK` ("단속 데이터 저장 성공")
 
-<br>
+### 2\. 단속 기록 조회 (Back -\> Front)
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**4. 연동 오류 등 문제가 생겼을 시 issue 탭 활용하기**
+프론트엔드 메인 페이지 및 위반 기록 페이지에서 사용할 위반 목록을 최신순으로 반환합니다.
 
-<br>
+  * **URL:** `GET /api/violations?limit={number}`
+  * **Query Parameter:**
+      * `limit` (선택): 가져올 데이터 개수 (기본값: 10)
+  * **Response:**
+    ```json
+    [
+      {
+        "id": 1,
+        "type": "헬멧 미착용",
+        "image_url": "https://example.com/images/helmet_001.jpg",
+        "camera": "CAM-01",
+        "confidence": 94,
+        "timestamp": "2025-03-28 14:32:01"
+      }
+    ]
+    ```
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**5. 모든 함수/클래스 등 기능에 주석달기**
+### 3\. 실시간 통계 조회 (Back -\> Front)
 
-<br>
+프론트엔드 하단 통계 카드에 표시될 오늘 발생한 위반 건수를 반환합니다.
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![코딩컨벤션](https://github.com/user-attachments/assets/4942c736-d296-4348-865a-d3459c8128ec)
-
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;은디비 수업자료에서 발췌
-
-<br>
-
+  * **URL:** `GET /api/stats`
+  * **Response:** *(현재 임시 데이터 반환 중, 실제 쿼리로 교체 예정)*
+    ```json
+    {
+      "total": 12,
+      "helmet": 7,
+      "sidewalk": 3,
+      "multiRider": 2
+    }
+    ```
