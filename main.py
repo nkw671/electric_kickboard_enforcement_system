@@ -15,6 +15,7 @@ import numpy as np
 from datetime import datetime
 from ultralytics import YOLO
 from ultralytics.utils.plotting import Annotator, colors as yolo_colors
+from PIL import ImageFont, ImageDraw, Image
 
 
 # ──────────────────────────────────────────────
@@ -86,6 +87,27 @@ class ZoneDrawer:
         self._zone_num  = 1        # 다음 Zone 이름에 붙을 번호
         self.draw_mode  = False    # True 이면 일시정지 후 Zone 그리기 모드
         self._base_frame = None    # 일시정지 시 캡처한 배경 프레임
+        self._font = self._load_font(18)
+
+    # 함수 이름 : _load_font()
+    # 기능      : 시스템에서 사용 가능한 한글 폰트를 순서대로 탐색하여 로드한다.
+    #             찾지 못하면 PIL 기본 폰트를 반환한다.
+    # 파라미터  : int size -> 폰트 크기 (픽셀)
+    # 반환값    : ImageFont 객체
+    @staticmethod
+    def _load_font(size: int):
+        candidates = [
+            "malgun.ttf",  # Windows 맑은 고딕
+            "C:/Windows/Fonts/malgun.ttf",  # Windows 절대 경로
+            "/usr/share/fonts/truetype/nanum/NanumGothic.ttf",  # Linux 나눔고딕
+            "/System/Library/Fonts/Supplemental/AppleGothic.ttf",  # macOS
+        ]
+        for path in candidates:
+            try:
+                return ImageFont.truetype(path, size)
+            except OSError:
+                continue
+        return ImageFont.load_default()
 
     # 함수 이름 : _color()
     # 기능      : 현재 색상 인덱스에 해당하는 BGR 색상 튜플을 반환한다.
@@ -252,11 +274,30 @@ class ZoneDrawer:
         cv2.line(frame, (mx - 14, my), (mx + 14, my), color, 1)
         cv2.line(frame, (mx, my - 14), (mx, my + 14), color, 1)
 
-    # 함수 이름 : _draw_hud()
-    #     # 기능      : 현재 모드(재생/그리기)에 맞는 조작 안내 텍스트를
-    #     #             화면 하단에 표시한다.
-    # 파라미터  : np.ndarray frame -> 텍스트를 그릴 대상 프레임 (BGR 이미지)
-    # 반환값    : 없음
+        # 함수 이름 : _put_text_ko()
+        # 기능      : PIL을 사용하여 OpenCV 프레임에 한글 텍스트를 그린다.
+        #             OpenCV 는 한글을 지원하지 않으므로 PIL로 변환 후 다시 BGR로 복원한다.
+        # 파라미터  : np.ndarray frame -> 텍스트를 그릴 대상 프레임 (BGR 이미지)
+        #             str        text  -> 출력할 문자열 (한글 포함 가능)
+        #             tuple      pos   -> 텍스트 좌상단 좌표 (x, y)
+        #             int        size  -> 폰트 크기 (픽셀)
+        #             tuple      color -> 텍스트 색상 (R, G, B)
+        # 반환값    : 없음
+
+    def _put_korean_text(self, frame: np.ndarray, text: str, pos: tuple,
+                         color: tuple = (220, 220, 220)):
+        img_pil = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))  # BGR → RGB 변환
+        draw = ImageDraw.Draw(img_pil)
+        draw.text(pos, text, font=self._font, fill=color)  # 텍스트 그리기
+        result = cv2.cvtColor(np.array(img_pil), cv2.COLOR_RGB2BGR)  # RGB → BGR 복원
+        np.copyto(frame, result)  # 원본 프레임에 반영
+
+        # 함수 이름 : _draw_hud()
+        # 기능      : 현재 모드(재생/그리기)에 맞는 조작 안내 텍스트를
+        #             화면 하단에 한글로 표시한다.
+        # 파라미터  : np.ndarray frame -> 텍스트를 그릴 대상 프레임 (BGR 이미지)
+        # 반환값    : 없음
+
     def _draw_hud(self, frame: np.ndarray):
         h = frame.shape[0]  # 프레임 높이 (텍스트 y 좌표 계산용)
 
@@ -273,8 +314,7 @@ class ZoneDrawer:
 
         # 두 줄의 안내 텍스트를 화면 하단에 순서대로 출력한다.
         for i, text in enumerate(lines):
-            cv2.putText(frame, text, (10, h - 36 + i * 20),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.48, (220, 220, 220), 1, cv2.LINE_AA)
+            self._put_korean_text(frame, text, pos=(10, h - 50 + i * 24))
 
     # 함수 이름 : _draw_dashed()
     # 기능      : 두 점 사이를 일정 간격의 점선으로 그린다.
@@ -349,9 +389,6 @@ class ZoneDrawer:
         return cv2.pointPolygonTest(poly, (cx, cy), False) >= 0
 
 
-# ──────────────────────────────────────────────
-# 메인
-# ──────────────────────────────────────────────
 
 # 함수 이름 : main()
 # 기능      : 프로그램 진입점.
