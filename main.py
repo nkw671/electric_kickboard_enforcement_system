@@ -1,14 +1,3 @@
-import ultralytics
-#from ultralytics import YOLO
-import cv2
-
-
-#model = YOLO('best_v3.pt')  # nano 모델 (가장 빠름)
-#print("YOLO model loaded successfully!")
-
-#results = model.track(source="1.mp4",show = True, conf=0.5)
-
-
 import cv2
 import json
 import numpy as np
