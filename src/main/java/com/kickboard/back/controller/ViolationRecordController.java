@@ -34,14 +34,9 @@ public class ViolationRecordController {
         return service.getRecentViolations(limit);
     }
 
-    // 임시 통계 데이터 제공 (GET /api/stats)
+    // 실시간 통계 데이터 제공 (GET /api/stats)
     @GetMapping("/stats")
     public Map<String, Integer> getStats() {
-        Map<String, Integer> stats = new HashMap<>();
-        stats.put("total", 12);
-        stats.put("helmet", 7);
-        stats.put("sidewalk", 3);
-        stats.put("multiRider", 2);
-        return stats;
+        return service.getStats();
     }
 }
