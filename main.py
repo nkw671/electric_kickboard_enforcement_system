@@ -446,7 +446,7 @@ class DecideViolation:
 #   delete_zones()      - 모든 Zone 을 초기화하고 파일을 갱신한다
 #   get_alerts()        - 누적된 침범 알림 목록을 반환한다
 # ──────────────────────────────────────────────
-class ZoneAPI:
+class ConnectAPI:
 
     # 함수 이름 : __init__()
     # 기능      : FastAPI 앱을 생성하고 CORS 설정 및 엔드포인트를 등록한다.
@@ -591,7 +591,7 @@ if __name__ == "__main__":
         drawer.load(ZONE_FILE)
 
     # ZoneAPI 를 생성한다. send_violation 을 DecideViolation 의 콜백으로 전달한다.
-    api = ZoneAPI(drawer=drawer, alert_history=alert_history)
+    api = ConnectAPI(drawer=drawer, alert_history=alert_history)
 
     # DecideViolation 을 생성하고 on_violation 콜백에 api.send_violation 을 연결한다.
     detector = DecideViolation(
