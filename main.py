@@ -269,7 +269,7 @@ def run_detection():
                         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 0, 255), 3)
                         cv2.putText(
                             frame,
-                            f"! {model.names[cid]} IN {z['name']}",
+                            f"! {model.names[cid]}  in walkway!!",
                             (x1, y1 - 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 255), 2,
                         )
