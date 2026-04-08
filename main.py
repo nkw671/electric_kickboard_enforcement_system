@@ -499,11 +499,11 @@ class ConnectAPI:
         self.alert_history.append(alert)
         print(alert)
         # 백엔드로 위반 정보를 전송한다. 잠시 비활성
-        '''try:
+        try:
             with httpx.Client() as client:
                 client.post(BACKEND_URL, json=payload, timeout=3.0)
         except Exception as e:
-            print(f"[전송 실패] {violation_type} | {e}")'''
+            print(f"[전송 실패] {violation_type} | {e}")
 
     # 함수 이름 : video_stream()
     # 기능      : latest_frame 을 MJPEG 형식으로 실시간 스트리밍한다.
