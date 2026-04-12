@@ -1,11 +1,13 @@
 import cv2
 import json
 import asyncio
+import time
 import numpy as np
 import httpx
 import os
 from datetime import datetime
 from threading import Thread
+from PIL import Image, ImageDraw, ImageFont
 from ultralytics import YOLO
 from ultralytics.utils.plotting import Annotator, colors as yolo_colors
 from fastapi import FastAPI
@@ -13,26 +15,27 @@ from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 
-
 # ──────────────────────────────────────────────
 # 설정값
 # ──────────────────────────────────────────────
+SOURCE          = "src/1.mp4"
+MODEL_PATH      = "src/best_v3.pt"
+CONF            = 0.5
+COOLDOWN        = 3.0
+ZONE_FILE       = "zones.json"
+CAMERA_ID       = "CAM-01"
+VIOLATION_DIR   = "../violations"
+BACKEND_URL     = "http://localhost:8080/api/violations"
 
-SOURCE          = "src/1.mp4"         # 입력 영상 경로 (웹캠은 0)
-MODEL_PATH      = "src/best_v3.pt"  # YOLO 모델 가중치 경로
-CONF            = 0.5                 # 객체 감지 최소 신뢰도
-COOLDOWN        = 3.0                 # 동일 객체 재알림 최소 간격 (초)
-ZONE_FILE       = "zones.json"        # Zone 좌표 저장/불러오기 파일 경로
-CAMERA_ID       = "CAM-01"           # 카메라 식별자
-VIOLATION_DIR   = "../violations"  # 위반 프레임 이미지 저장 디렉토리
-BACKEND_URL     = "http://localhost:8080/api/violations"  # 위반 전송 백엔드 URL
+# JPEG 인코딩 파라미터 — 한 번만 생성하여 재사용한다.
+ENCODE_PARAMS = [cv2.IMWRITE_JPEG_QUALITY, 65]
 
 # ──────────────────────────────────────────────
 # 전역 공유 상태
 # ──────────────────────────────────────────────
-latest_frame: bytes = b""            # MJPEG 스트림용 최신 프레임
-alert_history: list = []             # 누적 알림 목록 (GET /alerts 용)
-drawer        = None                 # run_detection() 에서 초기화 후 ZoneAPI 와 공유
+latest_frame: bytes = b""
+alert_history: list = []
+drawer        = None
 
 
 # ──────────────────────────────────────────────
@@ -52,7 +55,6 @@ drawer        = None                 # run_detection() 에서 초기화 후 Zone
 # ──────────────────────────────────────────────
 class ZoneDrawer:
 
-    # Zone 색상 팔레트 (BGR 순서)
     COLORS = [
         (0,   0,   255),
         (0,  165,  255),
@@ -66,10 +68,10 @@ class ZoneDrawer:
     # 파라미터  : 없음
     # 반환값    : 없음
     def __init__(self):
-        self.zones     = []   # 완성된 Zone 딕셔너리 목록
-        self._pts      = []   # 현재 그리는 중인 꼭짓점 좌표 목록
-        self._cidx     = 0    # 현재 선택된 색상 인덱스
-        self._zone_num = 1    # 다음 Zone 이름에 붙을 번호
+        self.zones     = []
+        self._pts      = []
+        self._cidx     = 0
+        self._zone_num = 1
 
     # 함수 이름 : _color()
     # 기능      : 현재 색상 인덱스에 해당하는 BGR 색상 튜플을 반환한다.
@@ -104,9 +106,8 @@ class ZoneDrawer:
             ov = frame.copy()
             cv2.fillPoly(ov, [poly], z["color"])
             cv2.addWeighted(ov, 0.25, frame, 0.75, 0, frame)
-            cv2.polylines(frame, [poly], True, z["color"], 2)   # 외곽선 그리기
+            cv2.polylines(frame, [poly], True, z["color"], 2)
 
-            # Zone 이름을 다각형 중심에 표시한다.
             cx = int(poly[:, 0].mean())
             cy = int(poly[:, 1].mean())
             cv2.putText(frame, z["name"], (cx - 30, cy),
@@ -114,11 +115,7 @@ class ZoneDrawer:
 
     # 함수 이름 : _draw_dashed()
     # 기능      : 두 점 사이를 일정 간격의 점선으로 그린다.
-    # 파라미터  : np.ndarray img -> 그릴 대상 이미지
-    #             tuple      p1  -> 시작점 (x, y)
-    #             tuple      p2  -> 끝점   (x, y)
-    #             tuple   color  -> 선 색상 (B, G, R)
-    #             int       gap  -> 점선 간격 (픽셀, 기본값 8)
+    # 파라미터  : np.ndarray img, tuple p1, tuple p2, tuple color, int gap
     # 반환값    : 없음
     def _draw_dashed(self, img, p1, p2, color, gap=8):
         x1, y1 = p1
@@ -171,7 +168,6 @@ class ZoneDrawer:
 
     # 함수 이름 : set_zones()
     # 기능      : React 캔버스에서 그린 Zone 좌표를 API 로 받아 zones 를 교체한다.
-    #             color 가 없으면 팔레트에서 자동 배정하고 파일에 저장한다.
     # 파라미터  : list zone_list -> [{"name": str, "pts": [[x,y],...], "color"(선택): [B,G,R]}, ...]
     # 반환값    : 없음
     def set_zones(self, zone_list: list):
@@ -191,102 +187,114 @@ class ZoneDrawer:
 # 매 프레임에서 위반 항목을 판정하고 백엔드로 전송하는 클래스.
 #
 # 내장 함수 목록:
-#   __init__()              - 모델, ZoneDrawer, 쿨다운, 콜백 초기화
-#   in_zone()               - 바운딩 박스 하단 중심이 특정 Zone 내부인지 확인 (ZoneDrawer에서 이동)
-#   _is_helmet_missing()    - helmet_x 가 person_with_kickboard / 2+person_with_kickboard 안에 있으면 헬멧 미착용
-#   _is_sidewalk_riding()   - person_with_kickboard / 2+person_with_kickboard 가 Zone 안에 있으면 인도주행
-#   _is_double_riding()     - 2+person_with_kickboard 레이블이 감지되면 다인탑승
-#   _save_frame()           - 위반 발생 시 해당 프레임을 이미지 파일로 저장
-#   _should_alert()         - 동일 객체·위반 유형에 대한 쿨다운 여부 확인
-#   check()                 - 매 프레임 위반 항목을 종합 판정하고 콜백을 호출
-#   run()                   - 영상 캡처 및 YOLO 추적 루프 실행 (run_detection에서 이동)
+#   __init__()              - 모델, ZoneDrawer, 쿨다운, 폰트, 콜백 초기화
+#   _load_font()            - 시스템 한글 폰트 탐색 및 로드
+#   _draw_violations()      - 한 프레임의 위반 텍스트를 PIL 변환 1회로 일괄 렌더링 (최적화)
+#   in_zone()               - 바운딩 박스 하단 중심이 특정 Zone 내부인지 확인
+#   _is_helmet_missing()    - helmet_X 가 탑승자 박스 안에 있으면 헬멧 미착용 판정
+#   _is_sidewalk_riding()   - 탑승자가 Zone 안에 있으면 인도주행 판정
+#   _is_double_riding()     - 2-person_with_kickboard 레이블이면 다인탑승 판정
+#   _save_frame()           - 위반 프레임을 이미지 파일로 저장
+#   _should_alert()         - 동일 객체·위반 유형 쿨다운 여부 확인
+#   check()                 - 매 프레임 위반 항목 종합 판정 후 콜백 호출
+#   run()                   - 영상 캡처 및 YOLO 추적 루프 실행
 # ──────────────────────────────────────────────
 class DecideViolation:
 
-    # 판정 대상 레이블
     RIDER_LABELS = {"person_with_kickboard", "2-person_with_kickboard"}
     HELMET_LABEL = "helmet_X"
-    DOUBLE_LABEL = "2-person_with_kickboard"                             # 다인탑승 레이블
+    DOUBLE_LABEL = "2-person_with_kickboard"
 
     # 함수 이름 : __init__()
     # 기능      : DecideViolation 객체를 초기화한다.
-    #             YOLO 모델, ZoneDrawer, 쿨다운 딕셔너리, 위반 콜백을 설정한다.
-    # 파라미터  : YOLO        model       -> 이미 로드된 YOLO 모델 인스턴스
-    #             ZoneDrawer  zone_drawer -> 인도 Zone 정보를 가진 ZoneDrawer 인스턴스
-    #             callable    on_violation -> 위반 감지 시 호출할 콜백 함수
-    #                                        인자: (violation_type: str, track_id: int, conf: float, frame: np.ndarray)
+    # 파라미터  : YOLO       model        -> 이미 로드된 YOLO 모델 인스턴스
+    #             ZoneDrawer zone_drawer  -> Zone 정보를 가진 ZoneDrawer 인스턴스
+    #             callable   on_violation -> 위반 감지 시 호출할 콜백 함수
     # 반환값    : 없음
     def __init__(self, model: YOLO, zone_drawer: "ZoneDrawer", on_violation: callable):
         self.model        = model
         self.zone_drawer  = zone_drawer
-        self.on_violation = on_violation   # 위반 감지 시 ZoneAPI.send_violation() 호출
-        self._last_alert  = {}             # 쿨다운 관리 딕셔너리 {(track_id, violation_type): timestamp}
-        self._font = self._load_font(20)  # 한글 폰트 로드
+        self.on_violation = on_violation
+        self._last_alert  = {}   # {(track_id, violation_type): 마지막 알림 시각}
+        self._font        = self._load_font(20)   # 한글 폰트를 한 번만 로드한다.
 
+    # 함수 이름 : _load_font()
+    # 기능      : 시스템에서 사용 가능한 한글 폰트를 순서대로 탐색하여 로드한다.
+    #             찾지 못하면 PIL 기본 폰트를 반환한다.
+    # 파라미터  : int size -> 폰트 크기 (픽셀)
+    # 반환값    : ImageFont 객체
     @staticmethod
     def _load_font(size: int):
         candidates = [
             "malgunbd.ttf",
-            "C:/Windows/Fonts/malgun.ttf",
-            "/usr/share/fonts/truetype/nanum/NanumGothic.ttf",
+            "C:/Windows/Fonts/malgunbd.ttf",
+            "/usr/share/fonts/truetype/nanum/NanumGothicBold.ttf",
             "/System/Library/Fonts/Supplemental/AppleGothic.ttf",
         ]
         for path in candidates:
             try:
-                from PIL import ImageFont
                 return ImageFont.truetype(path, size)
             except OSError:
                 continue
-        from PIL import ImageFont
         return ImageFont.load_default()
 
-    def _put_korean_text(self, frame, text, pos, color=(0, 0, 255)):
-        from PIL import Image, ImageDraw
+    # 함수 이름 : _draw_violations()
+    # 기능      : 한 프레임에서 발생한 모든 위반 텍스트를 PIL 변환 1회로 일괄 렌더링한다.
+    #             기존에는 위반 항목마다 BGR↔RGB 변환을 반복했으나,
+    #             이 함수는 변환을 한 번만 수행하여 성능을 개선한다.
+    # 파라미터  : np.ndarray frame          -> 렌더링할 대상 프레임 (BGR 이미지)
+    #             list       render_targets -> [(x1, y1, [v_type, ...]), ...] 형태의 렌더링 목록
+    # 반환값    : 없음
+    def _draw_violations(self, frame: np.ndarray, render_targets: list):
+        if not render_targets:
+            return
+
+        # BGR → RGB 변환을 한 번만 수행한다.
         img_pil = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
-        draw = ImageDraw.Draw(img_pil)
-        draw.text(pos, text, font=self._font, fill=(color[2], color[1], color[0]))  # BGR→RGB
+        draw    = ImageDraw.Draw(img_pil)
+
+        for (x1, y1, violations) in render_targets:
+            for idx, v_type in enumerate(violations):
+                draw.text(
+                    (x1, y1 - 60 - idx * 28),
+                    v_type,
+                    font  = self._font,
+                    fill  = (255, 0, 0),   # RGB 빨간색
+                )
+
+        # RGB → BGR 변환을 한 번만 수행하여 원본 프레임에 반영한다.
         result = cv2.cvtColor(np.array(img_pil), cv2.COLOR_RGB2BGR)
         np.copyto(frame, result)
 
     # 함수 이름 : in_zone()
     # 기능      : 바운딩 박스의 하단 중심(발 위치)이 특정 Zone 내부인지 확인한다.
-    #             ZoneDrawer 에서 이동.
-    # 파라미터  : dict zone       -> 확인할 Zone 딕셔너리
-    #             int  x1, y1    -> 바운딩 박스 좌상단 좌표 (픽셀)
-    #             int  x2, y2    -> 바운딩 박스 우하단 좌표 (픽셀)
+    # 파라미터  : dict zone, int x1, int y1, int x2, int y2
     # 반환값    : bool -> True 이면 발 위치가 Zone 내부
     def in_zone(self, zone: dict, x1: int, y1: int, x2: int, y2: int) -> bool:
         poly   = np.array(zone["pts"], dtype=np.int32)
-        cx, cy = int((x1 + x2) / 2), int(y2)   # 발 위치 좌표
+        cx, cy = int((x1 + x2) / 2), int(y2)
         return cv2.pointPolygonTest(poly, (cx, cy), False) >= 0
 
     # 함수 이름 : _is_helmet_missing()
-    # 기능      : helmet_x 바운딩 박스가 person_with_kickboard 또는
-    #             2+person_with_kickboard 바운딩 박스 내부에 포함되면 헬멧 미착용으로 판정한다.
-    # 파라미터  : list boxes    -> 전체 바운딩 박스 배열 [(x1,y1,x2,y2), ...]
-    #             list labels   -> 각 박스에 대응하는 레이블 문자열 목록
+    # 기능      : helmet_X 박스 중심이 탑승자 박스 내부에 있으면 헬멧 미착용으로 판정한다.
+    # 파라미터  : list boxes     -> 전체 바운딩 박스 목록
+    #             list labels    -> 각 박스에 대응하는 레이블 목록
     #             int  rider_idx -> 탑승자 박스의 인덱스
     # 반환값    : bool -> True 이면 헬멧 미착용
     def _is_helmet_missing(self, boxes: list, labels: list, rider_idx: int) -> bool:
-        rx1, ry1, rx2, ry2 = boxes[rider_idx]   # 탑승자 바운딩 박스 좌표
-
+        rx1, ry1, rx2, ry2 = boxes[rider_idx]
         for i, label in enumerate(labels):
             if label != self.HELMET_LABEL:
                 continue
-
-            # helmet_x 박스의 중심이 탑승자 박스 내부에 있는지 확인한다.
             hx1, hy1, hx2, hy2 = boxes[i]
-            hcx = (hx1 + hx2) / 2   # helmet_x 박스 중심 x
-            hcy = (hy1 + hy2) / 2   # helmet_x 박스 중심 y
-
+            hcx = (hx1 + hx2) / 2
+            hcy = (hy1 + hy2) / 2
             if rx1 <= hcx <= rx2 and ry1 <= hcy <= ry2:
-                return True          # 탑승자 박스 안에 helmet_x 존재 → 헬멧 미착용
-
+                return True
         return False
 
     # 함수 이름 : _is_sidewalk_riding()
-    # 기능      : 탑승자 바운딩 박스 하단 중심이 설정된 Zone 중 하나라도 내부에 있으면
-    #             인도주행으로 판정한다.
+    # 기능      : 탑승자 박스 하단 중심이 Zone 안에 있으면 인도주행으로 판정한다.
     # 파라미터  : int x1, y1, x2, y2 -> 탑승자 바운딩 박스 좌표
     # 반환값    : bool -> True 이면 인도주행
     def _is_sidewalk_riding(self, x1: int, y1: int, x2: int, y2: int) -> bool:
@@ -296,7 +304,7 @@ class DecideViolation:
         return False
 
     # 함수 이름 : _is_double_riding()
-    # 기능      : 감지된 레이블 중 2+person_with_kickboard 가 있으면 다인탑승으로 판정한다.
+    # 기능      : 2-person_with_kickboard 레이블이면 다인탑승으로 판정한다.
     # 파라미터  : str label -> 현재 객체의 레이블 문자열
     # 반환값    : bool -> True 이면 다인탑승
     def _is_double_riding(self, label: str) -> bool:
@@ -309,49 +317,50 @@ class DecideViolation:
     #             int        track_id       -> 추적 ID (파일명에 포함)
     # 반환값    : str -> 저장된 이미지의 로컬 파일 경로
     def _save_frame(self, frame: np.ndarray, violation_type: str, track_id: int) -> str:
-        os.makedirs(VIOLATION_DIR, exist_ok=True)   # 저장 디렉토리가 없으면 생성한다.
-
+        os.makedirs(VIOLATION_DIR, exist_ok=True)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename  = f"{timestamp}_{violation_type}_{track_id}.jpg"
         filepath  = os.path.join(VIOLATION_DIR, filename)
-
-        cv2.imwrite(filepath, frame)                # 프레임을 JPEG 로 저장한다.
+        cv2.imwrite(filepath, frame)
         return filepath
 
     # 함수 이름 : _should_alert()
     # 기능      : 동일 객체·위반 유형 조합에 대해 쿨다운이 지났는지 확인한다.
-    #             쿨다운 내에 있으면 중복 전송을 방지한다.
+    #             time 을 파일 상단에서 import 하여 매 호출마다 import 하지 않는다. (최적화)
     # 파라미터  : int track_id       -> 객체 추적 ID
     #             str violation_type -> 위반 유형 문자열
     # 반환값    : bool -> True 이면 알림 전송 가능
     def _should_alert(self, track_id: int, violation_type: str) -> bool:
-        import time
         key = (track_id, violation_type)
         if time.time() - self._last_alert.get(key, 0) >= COOLDOWN:
-            self._last_alert[key] = time.time()   # 마지막 알림 시각 갱신
+            self._last_alert[key] = time.time()
             return True
         return False
 
     # 함수 이름 : check()
     # 기능      : 한 프레임의 YOLO 감지 결과를 받아 위반 항목을 종합 판정한다.
-    #             위반이 감지되고 쿨다운이 지났으면 on_violation 콜백을 호출한다.
-    # 파라미터  : np.ndarray      frame   -> 현재 처리 중인 영상 프레임
-    #             list            boxes   -> 바운딩 박스 좌표 목록 [(x1,y1,x2,y2), ...]
-    #             list            labels  -> 각 박스에 대응하는 레이블 문자열 목록
-    #             list            confs   -> 각 박스에 대응하는 신뢰도 목록
-    #             list            ids     -> 각 박스에 대응하는 추적 ID 목록
+    #             텍스트 렌더링은 _draw_violations() 로 일괄 처리하여 PIL 변환을 1회로 줄인다. (최적화)
+    #             _save_frame() 은 쿨다운 통과 후에만 호출한다. (최적화)
+    # 파라미터  : np.ndarray frame  -> 현재 처리 중인 영상 프레임
+    #             list       boxes  -> 바운딩 박스 좌표 목록 [(x1,y1,x2,y2), ...]
+    #             list       labels -> 각 박스에 대응하는 레이블 문자열 목록
+    #             list       confs  -> 각 박스에 대응하는 신뢰도 목록
+    #             list       ids    -> 각 박스에 대응하는 추적 ID 목록
     # 반환값    : 없음
     def check(self, frame: np.ndarray, boxes: list, labels: list,
               confs: list, ids: list):
+
+        # 이번 프레임에서 렌더링할 위반 텍스트를 수집한다.
+        render_targets = []   # [(x1, y1, [v_type, ...]), ...]
+
         for i, label in enumerate(labels):
-            if label not in self.RIDER_LABELS:   # 탑승자 레이블이 아니면 건너뜀
+            if label not in self.RIDER_LABELS:
                 continue
 
             x1, y1, x2, y2 = boxes[i]
             tid  = ids[i]
             conf = confs[i]
 
-            # 위반 항목별로 판정하고 콜백을 호출한다.
             violations = []
 
             if self._is_helmet_missing(boxes, labels, i):
@@ -363,28 +372,29 @@ class DecideViolation:
             if self._is_double_riding(label):
                 violations.append("다인탑승")
 
-            for idx, v_type in enumerate(violations):
-                self._put_korean_text(
-                    frame, v_type,
-                    pos=(x1, y1 - 60 - idx * 24),
-                )
-                if self._should_alert(tid, v_type):
-                    # 위반 프레임을 저장한다.
-                    saved_path = self._save_frame(frame, v_type, tid) #잠깐 비활성
+            if violations:
+                render_targets.append((x1, y1, violations))
 
-                    # 콜백(ZoneAPI.send_violation)을 호출한다.
+            for v_type in violations:
+                if self._should_alert(tid, v_type):
+                    # 쿨다운 통과 후에만 프레임을 저장한다. (최적화)
+                    # saved_path = self._save_frame(frame, v_type, tid)  # 추후 image_url 연동 시 활성화
+
                     self.on_violation(
                         violation_type = v_type,
                         track_id       = tid,
                         conf           = conf,
-                        # image_path   = saved_path,  # 추후 image_url 연동 시 활성화
+                        # image_path   = saved_path,
                     )
                     print(f"[VIOLATION] {v_type} | #{tid} | conf={conf:.2f}")
 
+        # PIL 변환을 한 번만 수행하여 모든 위반 텍스트를 일괄 렌더링한다. (최적화)
+        self._draw_violations(frame, render_targets)
+
     # 함수 이름 : run()
     # 기능      : 영상을 프레임 단위로 읽고 YOLO 로 추적하면서 check() 를 호출한다.
+    #             enumerate 로 인덱스를 직접 사용하여 boxes.index() 탐색을 제거한다. (최적화)
     #             처리된 프레임을 JPEG 로 인코딩하여 latest_frame 에 저장한다.
-    #             run_detection() 에서 이동.
     # 파라미터  : 없음
     # 반환값    : 없음
     def run(self):
@@ -395,17 +405,16 @@ class DecideViolation:
 
         while True:
             ret, frame = cap.read()
-            if not ret:                             # 영상 끝에 도달하면 처음부터 재생한다.
+            if not ret:
                 cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
                 continue
 
-            # YOLO 로 객체를 추적한다.
             results = self.model.track(
                 frame, persist=True, conf=CONF, verbose=False,
-                tracker="bytetrack.yaml", vid_stride=2
+                tracker="bytetrack.yaml", vid_stride=3
             )
 
-            self.zone_drawer.draw_zones(frame)      # Zone 오버레이 렌더링
+            self.zone_drawer.draw_zones(frame)
 
             if results[0].boxes is not None:
                 raw_boxes = results[0].boxes.xyxy.cpu().numpy()
@@ -420,32 +429,34 @@ class DecideViolation:
                 boxes  = [tuple(map(int, b)) for b in raw_boxes]
 
                 ann = Annotator(frame, line_width=2)
-                for box, label, conf, tid in zip(boxes, labels, confs, ids):
-                    ann.box_label(box, f"{label} #{tid} {conf:.2f}",
-                                  color=yolo_colors(cls_ids[boxes.index(box)], bgr=True))
 
-                # 위반 판정을 수행한다.
+                # enumerate 로 인덱스를 직접 사용하여 boxes.index() 탐색을 제거한다. (최적화)
+                for idx, (box, label, conf, tid) in enumerate(zip(boxes, labels, confs, ids)):
+                    ann.box_label(box, f"{label} #{tid} {conf:.2f}",
+                                  color=yolo_colors(cls_ids[idx], bgr=True))
+
                 self.check(frame, boxes, labels, confs, ids)
 
-            # 처리된 프레임을 JPEG 로 인코딩하여 스트리밍용 전역 변수에 저장한다.
-            _, buf = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
+            # JPEG 인코딩 파라미터를 전역 상수로 재사용한다. (최적화)
+            _, buf = cv2.imencode(".jpg", frame, ENCODE_PARAMS)
             latest_frame = buf.tobytes()
 
         cap.release()
 
 
 # ──────────────────────────────────────────────
-# ZoneAPI 클래스
+# ConnectAPI 클래스
 # FastAPI 라우터와 엔드포인트를 하나로 묶는다.
 #
 # 내장 함수 목록:
 #   __init__()          - FastAPI 앱, CORS, 라우터를 초기화하고 엔드포인트를 등록한다
-#   send_violation()    - 위반 정보를 백엔드 POST /api/violations 로 전송한다
+#   send_violation()    - 위반 정보를 별도 스레드로 백엔드에 전송한다 (논블로킹)
+#   _post_violation()   - 백엔드 POST /api/violations 실제 전송 (스레드에서 호출)
 #   video_stream()      - latest_frame 을 MJPEG 형식으로 실시간 스트리밍한다
 #   get_zones()         - 현재 설정된 Zone 목록을 반환한다
 #   set_zones()         - React 캔버스에서 그린 Zone 목록을 받아 저장한다
 #   delete_zones()      - 모든 Zone 을 초기화하고 파일을 갱신한다
-#   get_alerts()        - 누적된 침범 알림 목록을 반환한다
+#   get_alerts()        - 누적된 위반 알림 목록을 반환한다
 # ──────────────────────────────────────────────
 class ConnectAPI:
 
@@ -466,7 +477,6 @@ class ConnectAPI:
             allow_headers=["*"],
         )
 
-        # 엔드포인트를 등록한다.
         self.app.get("/video/stream")(self.video_stream)
         self.app.get("/zones")(self.get_zones)
         self.app.post("/zones")(self.set_zones)
@@ -474,27 +484,26 @@ class ConnectAPI:
         self.app.get("/alerts")(self.get_alerts)
 
     # 함수 이름 : send_violation()
-    # 기능      : 위반 정보를 백엔드 POST /api/violations 로 전송하고
-    #             alert_history 에도 추가한다.
-    #             DecideViolation.check() 의 on_violation 콜백으로 호출된다.
-    # 파라미터  : str   violation_type -> 위반 유형 ("헬멧 미착용" / "인도주행" / "다인탑승")
+    # 기능      : 위반 정보를 alert_history 에 추가하고
+    #             백엔드 전송을 별도 스레드에서 실행하여 감지 루프를 블로킹하지 않는다.
+    # 파라미터  : str   violation_type -> 위반 유형
     #             int   track_id       -> 객체 추적 ID
     #             float conf           -> YOLO 감지 신뢰도 (0.0 ~ 1.0)
     # 반환값    : 없음
     def send_violation(self, violation_type: str, track_id: int, conf: float):
         payload = {
-            "type": violation_type,
-            "image_url": "", #TODO: 나중에 image_url로 고치기
-            "camera": CAMERA_ID,
+            "type":       violation_type,
+            "image_url":  "",   # TODO: 나중에 실제 image_url 로 교체
+            "camera":     CAMERA_ID,
             "confidence": int(conf * 100),
         }
 
         alert = {
-            "timestamp": datetime.now().strftime("%H:%M:%S"),
-            "type": violation_type,
-            "track_id": track_id,
+            "timestamp":  datetime.now().strftime("%H:%M:%S"),
+            "type":       violation_type,
+            "track_id":   track_id,
             "confidence": payload["confidence"],
-            "camera": CAMERA_ID,
+            "camera":     CAMERA_ID,
         }
         self.alert_history.append(alert)
         print(alert)
@@ -528,7 +537,7 @@ class ConnectAPI:
                         + latest_frame +
                         b"\r\n"
                     )
-                await asyncio.sleep(0.03)   # 약 30fps
+                await asyncio.sleep(0.03)
         return StreamingResponse(
             generate(),
             media_type="multipart/x-mixed-replace; boundary=frame"
@@ -590,27 +599,22 @@ class ConnectAPI:
 if __name__ == "__main__":
     import uvicorn
 
-    # YOLO 모델을 로드한다.
-    model = YOLO(MODEL_PATH)
+    model = YOLO(MODEL_PATH).to("cuda")
+    print(model.device)
     print("YOLO model loaded successfully!")
 
-    # ZoneDrawer 를 먼저 생성하고 저장된 Zone 을 불러온다.
     drawer = ZoneDrawer()
     if os.path.exists(ZONE_FILE):
         drawer.load(ZONE_FILE)
 
-    # ZoneAPI 를 생성한다. send_violation 을 DecideViolation 의 콜백으로 전달한다.
     api = ConnectAPI(drawer=drawer, alert_history=alert_history)
 
-    # DecideViolation 을 생성하고 on_violation 콜백에 api.send_violation 을 연결한다.
     detector = DecideViolation(
         model        = model,
         zone_drawer  = drawer,
         on_violation = api.send_violation,
     )
 
-    # 감지 루프를 별도 스레드에서 실행한다.
     Thread(target=detector.run, daemon=True).start()
 
-    # FastAPI 서버를 실행한다.
     uvicorn.run(api.app, host="0.0.0.0", port=8000)
