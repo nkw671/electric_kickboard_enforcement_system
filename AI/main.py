@@ -484,7 +484,7 @@ class ConnectAPI:
     def send_violation(self, violation_type: str, track_id: int, conf: float):
         payload = {
             "type": violation_type,
-            # "image_url": image_url,
+            "image_url": "", #TODO: 나중에 image_url로 고치기
             "camera": CAMERA_ID,
             "confidence": int(conf * 100),
         }
