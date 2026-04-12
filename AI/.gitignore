@@ -89,7 +89,7 @@ fabric.properties
 # modules.xml
 # .idea/misc.xml
 # *.ipr
-
+.idea/
 # Sonarlint plugin
 # https://plugins.jetbrains.com/plugin/7973-sonarlint
 .idea/**/sonarlint/
@@ -117,7 +117,7 @@ fabric.properties
 
 temp/
 training_data/
-zones.json
+AI/zones.json
 kickboard.v1-test1.yolo26/
 src/1.mp4
 src/test.mp4

@@ -13,9 +13,11 @@ from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 
+
 # ──────────────────────────────────────────────
 # 설정값
 # ──────────────────────────────────────────────
+
 SOURCE          = "src/1.mp4"         # 입력 영상 경로 (웹캠은 0)
 MODEL_PATH      = "src/best_v3.pt"  # YOLO 모델 가중치 경로
 CONF            = 0.5                 # 객체 감지 최소 신뢰도
@@ -102,7 +104,6 @@ class ZoneDrawer:
             ov = frame.copy()
             cv2.fillPoly(ov, [poly], z["color"])
             cv2.addWeighted(ov, 0.25, frame, 0.75, 0, frame)
-
             cv2.polylines(frame, [poly], True, z["color"], 2)   # 외곽선 그리기
 
             # Zone 이름을 다각형 중심에 표시한다.

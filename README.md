@@ -17,6 +17,22 @@
 
 <br>
 
+# ❗❗❗.gitignore 설정법
+
+<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**.gitignore은 git이 특정 파일을 추적하지 못하게 할때 사용합니다.**
+
+<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**gitignore 설정을 하지 않으면 설정 파일이 섞여들어가 다른 사람 컴퓨터에서는 깨지는 현상이 나타난다고 합니다.**
+
+<br>
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**(https://www.toptal.com/developers/gitignore) 해당 링크로 들어가셔서 개발 환경을 입력하면 자동으로 예외처리할 파일들 목록을 생성해줍니다. 복사한다음 .gitignore 파일에 붙여넣기 하면 설정됩니다.**
+
+<br>
+
 
 # ❗규칙
 
@@ -31,16 +47,16 @@
 
 <br>
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**3. commit 시 변경사항/구현한 기능을 메세지에 적어주세요**
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**3. commit 시 변경사항/구현한 기능을 메세지에 적기**
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**예시:) 킥보드 인식 기능 추가**
 
 <br>
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**5 연동 오류 등 문제가 생겼을 시 issue 탭 활용하기**
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**4. 연동 오류 등 문제가 생겼을 시 issue 탭 활용하기**
 
 <br>
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**4. 모든 함수/클래스 등 기능에 주석달기**
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**5. 모든 함수/클래스 등 기능에 주석달기**
 
 <br>
 
@@ -49,4 +65,3 @@
 > &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;은디비 수업자료에서 발췌
 
 <br>
-
