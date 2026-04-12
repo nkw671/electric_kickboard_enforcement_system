@@ -482,28 +482,36 @@ class ConnectAPI:
     # 반환값    : 없음
     def send_violation(self, violation_type: str, track_id: int, conf: float):
         payload = {
-            "type":       violation_type,
-            # "image_url": image_url,  # 추후 이미지 저장 경로를 URL 로 변환하여 활성화
-            "camera":     CAMERA_ID,
-            "confidence": int(conf * 100),   # 0~1 → 0~100 정수로 변환
+            "type": violation_type,
+            # "image_url": image_url,
+            "camera": CAMERA_ID,
+            "confidence": int(conf * 100),
         }
 
-        # alert_history 에 위반 정보를 추가한다.
         alert = {
-            "timestamp":  datetime.now().strftime("%H:%M:%S"),
-            "type":       violation_type,
-            "track_id":   track_id,
+            "timestamp": datetime.now().strftime("%H:%M:%S"),
+            "type": violation_type,
+            "track_id": track_id,
             "confidence": payload["confidence"],
-            "camera":     CAMERA_ID,
+            "camera": CAMERA_ID,
         }
         self.alert_history.append(alert)
         print(alert)
-        # 백엔드로 위반 정보를 전송한다. 잠시 비활성
+
+        # 전송을 별도 스레드에서 실행하여 감지 루프를 블로킹하지 않는다.
+        Thread(target=self._post_violation, args=(payload,), daemon=True).start()
+
+    # 함수 이름 : _post_violation()
+    # 기능      : 백엔드로 위반 정보를 전송한다.
+    #             send_violation() 에서 별도 스레드로 호출된다.
+    # 파라미터  : dict payload -> 전송할 위반 정보 딕셔너리
+    # 반환값    : 없음
+    def _post_violation(self, payload: dict):
         try:
             with httpx.Client() as client:
                 client.post(BACKEND_URL, json=payload, timeout=3.0)
         except Exception as e:
-            print(f"[전송 실패] {violation_type} | {e}")
+            print(f"[전송 실패] {payload.get('type')} | {e}")
 
     # 함수 이름 : video_stream()
     # 기능      : latest_frame 을 MJPEG 형식으로 실시간 스트리밍한다.
