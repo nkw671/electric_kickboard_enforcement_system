@@ -1,7 +1,7 @@
 from ultralytics import YOLO
 def main():
     # 1. 모델 로드 (이미 가지고 계신 yolo26n.pt 사용)
-    model = YOLO('temp/yolo26n.pt')
+    model = YOLO('../temp/yolo26n.pt')
 
     # 2. 학습 실행 (모든 코드는 이 if __name__ == '__main__': 블록 안에 있어야 합니다)
     model.train(

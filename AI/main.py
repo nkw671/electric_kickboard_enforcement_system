@@ -17,12 +17,12 @@ from fastapi.middleware.cors import CORSMiddleware
 # 설정값
 # ──────────────────────────────────────────────
 SOURCE          = "src/1.mp4"         # 입력 영상 경로 (웹캠은 0)
-MODEL_PATH      = "src/best_v3.pt"    # YOLO 모델 가중치 경로
+MODEL_PATH      = "src/best_v3.pt"  # YOLO 모델 가중치 경로
 CONF            = 0.5                 # 객체 감지 최소 신뢰도
 COOLDOWN        = 3.0                 # 동일 객체 재알림 최소 간격 (초)
 ZONE_FILE       = "zones.json"        # Zone 좌표 저장/불러오기 파일 경로
 CAMERA_ID       = "CAM-01"           # 카메라 식별자
-VIOLATION_DIR   = "violations"        # 위반 프레임 이미지 저장 디렉토리
+VIOLATION_DIR   = "../violations"  # 위반 프레임 이미지 저장 디렉토리
 BACKEND_URL     = "http://localhost:8080/api/violations"  # 위반 전송 백엔드 URL
 
 # ──────────────────────────────────────────────
