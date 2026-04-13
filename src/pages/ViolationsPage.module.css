@@ -1,3 +1,17 @@
+.status {
+  text-align: center;
+  padding: 40px;
+  color: #5a6a85;
+  font-size: 15px;
+}
+
+.statusError {
+  text-align: center;
+  padding: 40px;
+  color: #b91c1c;
+  font-size: 15px;
+}
+
 .page {
   max-width: 1200px;
   margin: 0 auto;

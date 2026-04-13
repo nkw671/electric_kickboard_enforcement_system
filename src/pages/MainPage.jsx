@@ -1,22 +1,15 @@
-import { DUMMY_VIOLATIONS, DUMMY_STATS } from '../data/dummyData'
 import { TYPE_COLOR, FEED_MAX_COUNT } from '../constants'
 import { extractTime } from '../utils'
 import StatCard from '../components/StatCard'
+import useApi from '../hooks/useApi'
 import styles from './MainPage.module.css'
 
-// TODO: 백엔드 연결 시 아래 import 주석 해제 후 더미 데이터 교체
-// import useApi from '../hooks/useApi'
-
-const violations = DUMMY_VIOLATIONS
-const stats = DUMMY_STATS
-const connected = false // TODO: 백엔드 연결 시 useApi의 connected 사용
-
 function MainPage() {
-  // TODO: 백엔드 연결 시 아래 코드 사용
-  // const { data: violations, loading, error, connected } = useApi('/api/violations?limit=10')
-  // const { data: stats } = useApi('/api/stats')
-  // if (loading) return <div className={styles.status}>불러오는 중...</div>
-  // if (error) return <div className={styles.statusError}>연결 오류: {error}</div>
+  const { data: violations, loading, error, connected } = useApi('/api/violations?limit=10')
+  const { data: stats } = useApi('/api/stats')
+
+  if (loading) return <div className={styles.status}>불러오는 중...</div>
+  if (error) return <div className={styles.statusError}>서버에 연결할 수 없습니다.</div>
 
   return (
     <div className={styles.page}>

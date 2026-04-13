@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react'
-import { DUMMY_VIOLATIONS } from '../data/dummyData'
 import { TYPE_COLOR, VIOLATION_TYPES } from '../constants'
+import useApi from '../hooks/useApi'
 import styles from './ViolationsPage.module.css'
 
 function ViolationsPage() {
   const [filter, setFilter] = useState('전체')
   const [selected, setSelected] = useState(null)
 
-  // TODO: 백엔드 연결 시 API에서 데이터 받아오기
-  const violations = DUMMY_VIOLATIONS
+  const { data: violations, loading, error } = useApi('/api/violations')
+
+  if (loading) return <div className={styles.status}>불러오는 중...</div>
+  if (error) return <div className={styles.statusError}>서버에 연결할 수 없습니다.</div>
 
   const filtered =
     filter === '전체' ? violations : violations.filter((v) => v.type === filter)
