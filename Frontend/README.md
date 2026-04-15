@@ -1,67 +1,168 @@
-# electric_kickboard_enforcement_system
-전동킥보드 단속 시스템 구현
+# 전동킥보드 단속 시스템 - 프론트엔드
 
-![로직](https://github.com/user-attachments/assets/d9fa42e2-6482-4a90-8400-b14e1bd16b89)
+## 기술 스택
 
-<br>
+| 항목 | 기술 |
+|------|------|
+| 프레임워크 | React 18 (Vite) |
+| 라우팅 | React Router v6 |
+| HTTP 통신 | Fetch API |
+| 스타일 | CSS Module |
+| 언어 | JavaScript (JSX) |
 
-# 📎초기설정
+---
 
-<br>
+## 로컬 실행 방법
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**1. 프로젝트 진행할 폴더 생성후 " git clone 링크 . " 명령어로 연결하기**
+```bash
+# 패키지 설치
+npm install
 
-<br>
+# 개발 서버 실행 (http://localhost:5173)
+npm run dev
+```
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**2. 브랜치 만들고 작업시작하기**
+---
 
-<br>
+## 폴더 구조
 
-# ❗❗❗.gitignore 설정법
+```
+src/
+├── main.jsx              # 앱 시작점, BrowserRouter 설정
+├── App.jsx               # URL에 따라 페이지 연결 (라우팅)
+├── App.css               # 전역 스타일 (배경색, 폰트)
+├── index.css             # 기본 초기화 스타일
+├── constants.js          # 공용 상수 (위반 유형, 색상)
+├── utils.js              # 공용 함수 (타임스탬프 파싱 등)
+│
+├── data/
+│   └── dummyData.js      # 백엔드 연결 전 테스트용 더미 데이터
+│
+├── hooks/
+│   └── useApi.js         # API 폴링 훅 (3초마다 백엔드 호출)
+│
+├── components/           # 여러 페이지에서 공통으로 사용하는 컴포넌트
+│   ├── Layout.jsx        # 전체 레이아웃 틀 (헤더 + 네비게이션)
+│   ├── Layout.module.css
+│   ├── StatCard.jsx      # 통계 카드 컴포넌트 (숫자 + 라벨)
+│   └── StatCard.module.css
+│
+└── pages/                # 실제 화면 페이지
+    ├── MainPage.jsx          # 메인 페이지
+    ├── MainPage.module.css
+    ├── ViolationsPage.jsx    # 위반 기록 페이지
+    └── ViolationsPage.module.css
+```
 
-<br>
+---
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**.gitignore은 git이 특정 파일을 추적하지 못하게 할때 사용합니다.**
+## 페이지 구성
 
-<br>
+### 메인 페이지 (`/`)
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**gitignore 설정을 하지 않으면 설정 파일이 섞여들어가 다른 사람 컴퓨터에서는 깨지는 현상이 나타난다고 합니다.**
+```
+┌─────────────────────────────────────────────┐
+│  실시간 영상 스트림          실시간 위반 알림  │
+│  (YOLO 처리된 영상)         헬멧미착용 CAM-01 │
+│                             인도주행  CAM-02  │
+├──────────┬──────────┬──────────┬────────────┤
+│ 오늘 위반 │ 헬멧미착용│ 인도주행  │ 다인탑승   │
+│   12건   │   7건    │   3건    │   2건      │
+└──────────┴──────────┴──────────┴────────────┘
+```
 
-<br>
+- 영상 스트림 영역: AI 서버에서 처리된 실시간 영상 출력 (백엔드 연결 후 활성화)
+- 실시간 위반 알림 피드: 최근 감지된 위반 목록 표시
+- 통계 카드: 오늘 발생한 위반 건수를 유형별로 표시
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**(https://www.toptal.com/developers/gitignore) 해당 링크로 들어가셔서 개발 환경을 입력하면 자동으로 예외처리할 파일들 목록을 생성해줍니다. 복사한다음 .gitignore 파일에 붙여넣기 하면 설정됩니다.**
+### 위반 기록 페이지 (`/violations`)
 
-<br>
+```
+┌─────────────────────────────────────────────┐
+│  [전체] [헬멧 미착용] [인도 주행] [다인 탑승] │
+├──────┬────────────────┬────────┬────────────┤
+│ 번호 │ 일시           │ 위반   │ 카메라     │
+├──────┼────────────────┼────────┼────────────┤
+│  #1  │ 14:32:01       │ 헬멧   │ CAM-01     │
+│  #2  │ 14:28:55       │ 인도   │ CAM-02     │
+└──────┴────────────────┴────────┴────────────┘
+```
 
+- 필터 버튼: 위반 유형별로 목록 필터링
+- 위반 목록 테이블: 전체 위반 기록 표시
+- 상세 모달: 보기 버튼 클릭 시 캡처 이미지 + 상세 정보 팝업 (ESC로 닫기)
 
-# ❗규칙
+---
 
-<br>
+## 데이터 흐름
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**1. 모든 기능은 브랜치를 생성하여 구현 후 merge 하기(main에 다이렉트로 merge X)**
+### 현재 (더미 데이터)
+```
+dummyData.js → 각 페이지 → 화면 출력
+```
 
-<br>
+### 백엔드 연결 후
+```
+백엔드 서버 → useApi.js (3초마다 호출) → 각 페이지 → 화면 출력
+```
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**2. 브랜치명은 파트명/기능명 으로 명명**
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**예시:) AI/kickboard_detection**
+---
 
-<br>
+## 백엔드 연결 방법
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**3. commit 시 변경사항/구현한 기능을 메세지에 적기**
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**예시:) 킥보드 인식 기능 추가**
+### 1. 환경변수 설정
+프로젝트 루트에 `.env` 파일 생성
+```
+VITE_API_URL=http://백엔드서버주소
+```
 
-<br>
+### 2. 주석 해제
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**4. 연동 오류 등 문제가 생겼을 시 issue 탭 활용하기**
+**MainPage.jsx**
+```jsx
+// 아래 주석 해제 후 더미 데이터 제거
+const { data: violations, connected } = useApi('/api/violations?limit=10')
+const { data: stats } = useApi('/api/stats')
+```
 
-<br>
+**영상 스트림**
+```jsx
+// 아래 img 태그 주석 해제
+<img src="http://AI서버주소/stream" className={styles.stream} alt="stream" />
+```
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**5. 모든 함수/클래스 등 기능에 주석달기**
+---
 
-<br>
+## 백엔드 API 명세 (프론트 기준)
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![코딩컨벤션](https://github.com/user-attachments/assets/4942c736-d296-4348-865a-d3459c8128ec)
+### 위반 목록
+```
+GET /api/violations
 
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;은디비 수업자료에서 발췌
+응답 예시:
+[
+  {
+    "id": 1,
+    "type": "헬멧 미착용",     ← 반드시 이 문자열 그대로
+    "camera": "CAM-01",
+    "timestamp": "2025-03-28 14:32:01",
+    "confidence": 94,
+    "image_url": "http://..."
+  }
+]
+```
 
-<br>
+### 통계
+```
+GET /api/stats
+
+응답 예시:
+{
+  "total": 12,
+  "helmet": 7,
+  "sidewalk": 3,
+  "multiRider": 2
+}
+```
+
+> **주의:** `type` 필드값은 `"헬멧 미착용"`, `"인도 주행"`, `"다인 탑승"` 중 하나여야 색상이 정상 적용됩니다.
