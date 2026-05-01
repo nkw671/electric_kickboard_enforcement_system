@@ -56,7 +56,7 @@
 
 <br>
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**5. 모든 함수/클래스 등 기능에 주석달기**
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**5. 되도록 함수/클래스 등 기능에 주석달기**
 
 <br>
 
