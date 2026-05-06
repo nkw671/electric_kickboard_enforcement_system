@@ -170,3 +170,62 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* 토스트 알림 */
+.toast {
+  position: fixed;
+  top: 80px;
+  right: 24px;
+  background-color: #ffffff;
+  border: 1px solid #d0d7e3;
+  border-left: 4px solid #002855;
+  border-radius: 4px;
+  padding: 12px 16px;
+  box-shadow: 0 4px 16px rgba(0, 20, 60, 0.15);
+  z-index: 300;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: slideIn 0.2s ease;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(110%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.toastLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: #5a6a85;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.toastContent {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toastBadge {
+  padding: 2px 8px;
+  border-radius: 2px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.toastCamera {
+  font-size: 13px;
+  color: #1a2744;
+  font-weight: 600;
+}
+
+.toastConf {
+  margin-left: auto;
+  font-size: 12px;
+  color: #5a6a85;
+}

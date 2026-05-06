@@ -1,18 +1,44 @@
+import { useState, useRef } from 'react'
 import { TYPE_COLOR, FEED_MAX_COUNT } from '../constants'
 import { extractTime } from '../utils'
 import StatCard from '../components/StatCard'
 import useApi from '../hooks/useApi'
+import useSSE from '../hooks/useSSE'
 import styles from './MainPage.module.css'
 
 function MainPage() {
   const { data: violations, loading, error, connected } = useApi('/api/violations?limit=10')
   const { data: stats } = useApi('/api/stats')
 
-  if (loading) return <div className={styles.status}>불러오는 중...</div>
+  const [toast, setToast] = useState(null)
+  const toastTimerRef = useRef(null)
+
+  useSSE('/api/stream', (violation) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+    setToast(violation)
+    toastTimerRef.current = setTimeout(() => setToast(null), 4000)
+  })
+
+  if (loading || !stats) return <div className={styles.status}>불러오는 중...</div>
   if (error) return <div className={styles.statusError}>서버에 연결할 수 없습니다.</div>
 
   return (
     <div className={styles.page}>
+      {toast && (
+        <div className={styles.toast}>
+          <span className={styles.toastLabel}>새 위반 감지</span>
+          <div className={styles.toastContent}>
+            <span
+              className={styles.toastBadge}
+              style={{ backgroundColor: TYPE_COLOR[toast.type] || '#64748b' }}
+            >
+              {toast.type}
+            </span>
+            <span className={styles.toastCamera}>{toast.camera}</span>
+            <span className={styles.toastConf}>{toast.confidence}%</span>
+          </div>
+        </div>
+      )}
       {/* 영상 + 알림 영역 */}
       <div className={styles.topSection}>
         {/* 영상 스트림 */}
