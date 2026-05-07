@@ -9,12 +9,6 @@ function ViolationsPage() {
 
   const { data: violations, loading, error } = useApi('/api/violations')
 
-  if (loading) return <div className={styles.status}>불러오는 중...</div>
-  if (error) return <div className={styles.statusError}>서버에 연결할 수 없습니다.</div>
-
-  const filtered =
-    filter === '전체' ? violations : violations.filter((v) => v.type === filter)
-
   useEffect(() => {
     if (!selected) return
     const onKeyDown = (e) => {
@@ -23,6 +17,12 @@ function ViolationsPage() {
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [selected])
+
+  if (loading) return <div className={styles.status}>불러오는 중...</div>
+  if (error) return <div className={styles.statusError}>서버에 연결할 수 없습니다.</div>
+
+  const filtered =
+    filter === '전체' ? violations : violations.filter((v) => v.type === filter)
 
   return (
     <div className={styles.page}>
@@ -91,10 +91,17 @@ function ViolationsPage() {
               </button>
             </div>
             <div className={styles.modalBody}>
-              <div className={styles.imagePlaceholder}>
-                캡처 이미지<br />
-                <small>백엔드 연결 후 표시</small>
-              </div>
+              {selected.image_url ? (
+                <img
+                  src={selected.image_url}
+                  alt="위반 캡처"
+                  className={styles.captureImage}
+                />
+              ) : (
+                <div className={styles.imagePlaceholder}>
+                  캡처 이미지 없음
+                </div>
+              )}
               <div className={styles.infoGrid}>
                 <div className={styles.infoItem}>
                   <span className={styles.infoLabel}>위반 유형</span>

@@ -1,67 +1,103 @@
-# electric_kickboard_enforcement_system
-전동킥보드 단속 시스템 구현
+# Frontend - 전동킥보드 단속 시스템
 
-![로직](https://github.com/user-attachments/assets/d9fa42e2-6482-4a90-8400-b14e1bd16b89)
+## 기술 스택
 
-<br>
+| 항목 | 기술 |
+|------|------|
+| 언어 | JavaScript (ES2020+) |
+| 프레임워크 | React 18 |
+| 빌드 도구 | Vite |
+| 스타일 | CSS Modules |
+| 라우팅 | React Router v6 |
+| 통신 | Fetch API (폴링), SSE (실시간 알림) |
 
-# 📎초기설정
+---
 
-<br>
+## 로컬 실행 방법
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**1. 프로젝트 진행할 폴더 생성후 " git clone 링크 . " 명령어로 연결하기**
+### 1. 의존성 설치
+```bash
+cd Frontend
+npm install
+```
 
-<br>
+### 2. 백엔드 서버 주소 확인
+`vite.config.js`에서 백엔드 주소를 확인합니다.
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**2. 브랜치 만들고 작업시작하기**
+```js
+// 같은 컴퓨터에서 백엔드 실행 시 (기본값)
+proxy: {
+  '/api': 'http://localhost:8080',
+}
 
-<br>
+// 다른 컴퓨터에서 실행 중인 경우 해당 IP로 변경
+proxy: {
+  '/api': 'http://192.168.0.xx:8080',
+}
+```
 
-# ❗❗❗.gitignore 설정법
+### 3. 개발 서버 실행
+```bash
+npm run dev
+```
+브라우저에서 `http://localhost:5173` 접속
 
-<br>
+---
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**.gitignore은 git이 특정 파일을 추적하지 못하게 할때 사용합니다.**
+## 폴더 구조
 
-<br>
+```
+src/
+├── components/
+│   ├── Layout.jsx            # 공통 헤더 및 네비게이션
+│   └── StatCard.jsx          # 통계 카드 컴포넌트
+│
+├── hooks/
+│   ├── useApi.js             # 주기적 폴링 훅 (3초 간격)
+│   └── useSSE.js             # SSE 실시간 알림 훅
+│
+├── pages/
+│   ├── MainPage.jsx          # 메인 페이지 (영상 스트림, 알림 피드, 통계)
+│   └── ViolationsPage.jsx    # 위반 기록 페이지 (목록, 필터, 상세 모달)
+│
+├── constants.js              # 위반 유형, 색상 등 공통 상수
+├── utils.js                  # 날짜/시간 포맷 유틸
+└── App.jsx                   # 라우팅 설정
+```
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**gitignore 설정을 하지 않으면 설정 파일이 섞여들어가 다른 사람 컴퓨터에서는 깨지는 현상이 나타난다고 합니다.**
+---
 
-<br>
+## 페이지 설명
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**(https://www.toptal.com/developers/gitignore) 해당 링크로 들어가셔서 개발 환경을 입력하면 자동으로 예외처리할 파일들 목록을 생성해줍니다. 복사한다음 .gitignore 파일에 붙여넣기 하면 설정됩니다.**
+### 메인 페이지 (`/`)
+- 영상 스트림 영역 (AI 서버 연결 후 활성화)
+- 실시간 위반 알림 피드 (최근 6건)
+- 오늘 위반 통계 카드 (총계 / 헬멧 미착용 / 인도 주행 / 다인 탑승)
+- 새 위반 감지 시 토스트 알림 (SSE)
 
-<br>
+### 위반 기록 페이지 (`/violations`)
+- 전체 위반 기록 테이블
+- 위반 유형별 필터 버튼
+- 상세 보기 모달 (캡처 이미지, 위반 유형, 감지 시각, 카메라, 신뢰도)
 
+---
 
-# ❗규칙
+## 백엔드 API 연결
 
-<br>
+| 기능 | 방식 | 엔드포인트 |
+|------|------|------------|
+| 위반 기록 조회 | GET | `/api/violations?limit={n}` |
+| 통계 조회 | GET | `/api/stats` |
+| 실시간 알림 구독 | SSE | `/api/stream` |
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**1. 모든 기능은 브랜치를 생성하여 구현 후 merge 하기(main에 다이렉트로 merge X)**
+---
 
-<br>
+## 데이터 흐름
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**2. 브랜치명은 파트명/기능명 으로 명명**
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**예시:) AI/kickboard_detection**
-
-<br>
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**3. commit 시 변경사항/구현한 기능을 메세지에 적기**
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**예시:) 킥보드 인식 기능 추가**
-
-<br>
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**4. 연동 오류 등 문제가 생겼을 시 issue 탭 활용하기**
-
-<br>
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**5. 모든 함수/클래스 등 기능에 주석달기**
-
-<br>
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ![코딩컨벤션](https://github.com/user-attachments/assets/4942c736-d296-4348-865a-d3459c8128ec)
-
-> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;은디비 수업자료에서 발췌
-
-<br>
+```
+백엔드 서버 (localhost:8080)
+        │
+        ├─ GET /api/violations  →  위반 기록 테이블 / 실시간 피드
+        ├─ GET /api/stats       →  통계 카드
+        └─ GET /api/stream      →  SSE 토스트 알림 (새 위반 감지 시)
+```
