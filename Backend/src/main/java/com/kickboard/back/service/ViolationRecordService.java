@@ -64,10 +64,18 @@ public class ViolationRecordService {
         }
     }
 
-    // 프론트엔드 요청 개수에 따른 최신 단속 기록 조회
-    public List<ViolationResponse> getRecentViolations(int limit) {
+    // 프론트엔드 요청 조건(유형, 개수)에 따른 단속 기록 조회
+    public List<ViolationResponse> getRecentViolations(String type, int limit) {
         Pageable pageable = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "createdAt"));
-        List<ViolationRecord> records = repository.findAll(pageable).getContent();
+        List<ViolationRecord> records;
+
+        if (type == null || type.isEmpty() || type.equals("전체")) {
+            records = repository.findAll(pageable).getContent();
+        }
+        else {
+            records = repository.findByViolationType(type, pageable);
+        }
+
         return records.stream().map(ViolationResponse::new).collect(Collectors.toList());
     }
 

@@ -30,9 +30,10 @@ public class ViolationRecordController {
     // 프론트엔드 단속 기록 데이터 제공 (GET /api/violations)
     @GetMapping("/violations")
     public List<ViolationResponse> getViolations(
+            @RequestParam(required = false) String type,
             @RequestParam(defaultValue = "10") int limit
     ) {
-        return service.getRecentViolations(limit);
+        return service.getRecentViolations(type, limit);
     }
 
     // 프론트엔드 대시보드용 위반 통계 데이터 제공 (GET /api/stats)
