@@ -4,10 +4,12 @@ import com.kickboard.back.dto.ViolationCreateRequest;
 import com.kickboard.back.dto.ViolationResponse;
 import com.kickboard.back.service.ViolationRecordService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -38,8 +40,11 @@ public class ViolationRecordController {
 
     // 프론트엔드 대시보드용 위반 통계 데이터 제공 (GET /api/stats)
     @GetMapping("/stats")
-    public Map<String, Integer> getStats() {
-        return service.getStats();
+    public Map<String, Integer> getStats(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+    ) {
+        return service.getStats(startDate, endDate);
     }
 
     // 프론트엔드 실시간 알림(SSE) 수신용 스트림 연결 (GET /api/stream)

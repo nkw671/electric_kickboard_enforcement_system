@@ -11,6 +11,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -79,14 +82,29 @@ public class ViolationRecordService {
         return records.stream().map(ViolationResponse::new).collect(Collectors.toList());
     }
 
-    // 대시보드 표시용 위반 유형별 누적 통계 산출
-    public Map<String, Integer> getStats() {
-        Map<String, Integer> stats = new HashMap<>();
-        long total = repository.count();
-        long helmet = repository.countByViolationType("헬멧 미착용");
-        long sidewalk = repository.countByViolationType("인도 주행");
-        long multiRider = repository.countByViolationType("다인 탑승");
+    // 대시보드 표시용 위반 유형별 및 기간별 누적 통계 산출
+    public Map<String, Integer> getStats(LocalDate startDate, LocalDate endDate) {
+        long total, helmet, sidewalk, multiRider;
 
+        // 시작일과 종료일이 모두 전달된 경우 (기간 필터링 적용)
+        if (startDate != null && endDate != null) {
+            LocalDateTime start = startDate.atStartOfDay();
+            LocalDateTime end = endDate.atTime(LocalTime.MAX);
+
+            total = repository.countByCreatedAtBetween(start, end);
+            helmet = repository.countByViolationTypeAndCreatedAtBetween("헬멧 미착용", start, end);
+            sidewalk = repository.countByViolationTypeAndCreatedAtBetween("인도 주행", start, end);
+            multiRider = repository.countByViolationTypeAndCreatedAtBetween("다인 탑승", start, end);
+        }
+        // 날짜 파라미터가 없는 경우 (전체 누적 통계)
+        else {
+            total = repository.count();
+            helmet = repository.countByViolationType("헬멧 미착용");
+            sidewalk = repository.countByViolationType("인도 주행");
+            multiRider = repository.countByViolationType("다인 탑승");
+        }
+
+        Map<String, Integer> stats = new HashMap<>();
         stats.put("total", (int) total);
         stats.put("helmet", (int) helmet);
         stats.put("sidewalk", (int) sidewalk);
