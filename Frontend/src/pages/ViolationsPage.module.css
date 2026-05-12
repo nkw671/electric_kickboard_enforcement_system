@@ -189,6 +189,15 @@
   gap: 16px;
 }
 
+.captureImage {
+  width: 100%;
+  border-radius: 2px;
+  display: block;
+  max-height: 300px;
+  object-fit: contain;
+  background-color: #f5f7fb;
+}
+
 .imagePlaceholder {
   height: 200px;
   background-color: #f5f7fb;

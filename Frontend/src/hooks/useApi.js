@@ -25,11 +25,11 @@ function useApi(url, interval = 3000) {
         setData(json)
         setConnected(true)
         setError(null)
+        setLoading(false)
       } catch (err) {
         if (err.name === 'AbortError') return
         setConnected(false)
         setError(err.message)
-      } finally {
         setLoading(false)
       }
     }
