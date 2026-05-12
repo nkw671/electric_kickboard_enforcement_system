@@ -5,8 +5,8 @@ def main():
 
 
     model.train(
-        data='C:/Kickboard_project/training_data/data.yaml',
-        epochs=50,
+        data='/kickboard.v1-test1.yolo26/data.yaml',
+        epochs=200,
         imgsz=640,
         device=0,
         workers=0
