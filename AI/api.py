@@ -1,10 +1,13 @@
 import asyncio
 import httpx
+import os
 from datetime import datetime
 from threading import Thread
+from urllib.parse import quote
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 import config
 
 
@@ -37,6 +40,10 @@ class ConnectAPI:
             allow_headers=["*"],
         )
 
+        # 위반 이미지 정적 파일 서빙
+        os.makedirs(config.VIOLATION_DIR, exist_ok=True)
+        self.app.mount("/violations", StaticFiles(directory=config.VIOLATION_DIR), name="violations")
+
         self.app.get("/video/stream")(self.video_stream)
         self.app.get("/zones")(self.get_zones)
         self.app.post("/zones")(self.set_zones)
@@ -49,11 +56,19 @@ class ConnectAPI:
     # 파라미터  : str   violation_type -> 위반 유형
     #             int   track_id       -> 객체 추적 ID
     #             float conf           -> YOLO 감지 신뢰도 (0.0 ~ 1.0)
+    #             str   image_path     -> 저장된 위반 이미지 로컬 경로
     # 반환값    : 없음
-    def send_violation(self, violation_type: str, track_id: int, conf: float):
+    def send_violation(self, violation_type: str, track_id: int, conf: float,
+                       image_path: str = ""):
+        # 로컬 파일 경로를 접근 가능한 URL 로 변환한다.
+        image_url = ""
+        if image_path:
+            filename  = os.path.basename(image_path)
+            image_url = f"{config.AI_BASE_URL}/violations/{quote(filename)}"
+
         payload = {
             "type":       violation_type,
-            "image_url":  "",   # TODO: 나중에 실제 image_url 로 교체
+            "image_url":  image_url,
             "camera":     config.CAMERA_ID,
             "confidence": int(conf * 100),
         }

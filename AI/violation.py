@@ -207,6 +207,7 @@ class DecideViolation:
               confs: list, ids: list):
 
         render_targets = []   # [(x1, y1, [v_type, ...]), ...]
+        pending_alerts = []   # [(tid, v_type, conf), ...] 렌더링 후 처리할 알림 목록
 
         for i, label in enumerate(labels):
             if label not in self.RIDER_LABELS:
@@ -228,17 +229,21 @@ class DecideViolation:
 
             for v_type in violations:
                 if self._should_alert(tid, v_type):
-                    # saved_path = self._save_frame(frame, v_type, tid)  # 추후 image_url 연동 시 활성화
-                    self.on_violation(
-                        violation_type = v_type,
-                        track_id       = tid,
-                        conf           = conf,
-                        # image_path   = saved_path,
-                    )
+                    pending_alerts.append((tid, v_type, conf))
                     print(f"[VIOLATION] {v_type} | #{tid} | conf={conf:.2f}")
 
-        # PIL 변환을 한 번만 수행하여 모든 위반 텍스트를 일괄 렌더링한다.
+        # 텍스트 렌더링을 먼저 수행하여 위반 텍스트가 포함된 프레임을 저장한다.
         self._draw_violations(frame, render_targets)
+
+        # 렌더링이 완료된 프레임을 저장하고 콜백을 호출한다.
+        for tid, v_type, conf in pending_alerts:
+            saved_path = self._save_frame(frame, v_type, tid)
+            self.on_violation(
+                violation_type = v_type,
+                track_id       = tid,
+                conf           = conf,
+                image_path     = saved_path,
+            )
 
 
 # 함수 이름 : build_strategies()

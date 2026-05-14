@@ -5,9 +5,9 @@ def main():
 
 
     model.train(
-        data='C:/Kickboard_project/training_data/data.yaml',
-        epochs=50,
-        imgsz=640,
+        data='C:\Projects\Kickboard_project\AI\new_train\kickboard-detection(add-more-helmet-data)-1/data.yaml',
+        epochs=200,
+        imgsz=800,
         device=0,
         workers=0
     )
