@@ -117,10 +117,11 @@ fabric.properties
 
 temp/
 training_data/
-AI/zones.json
+AI/zones.jsong
 kickboard.v1-test1.yolo26/
 src/1.mp4
 src/test.mp4
 node_modules/
 .vscode/
 CLAUDE.md
+/yolo26n.pt

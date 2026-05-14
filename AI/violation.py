@@ -228,12 +228,12 @@ class DecideViolation:
 
             for v_type in violations:
                 if self._should_alert(tid, v_type):
-                    # saved_path = self._save_frame(frame, v_type, tid)  # 추후 image_url 연동 시 활성화
+                    saved_path = self._save_frame(frame, v_type, tid)
                     self.on_violation(
                         violation_type = v_type,
                         track_id       = tid,
                         conf           = conf,
-                        # image_path   = saved_path,
+                        image_path     = saved_path,
                     )
                     print(f"[VIOLATION] {v_type} | #{tid} | conf={conf:.2f}")
 
