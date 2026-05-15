@@ -30,21 +30,25 @@ public class ViolationRecordController {
     }
 
     // 프론트엔드 단속 기록 데이터 제공 (GET /api/violations)
+    // 유형(type)과 구역(camera) 조건을 조합하여 최신 기록을 조회합니다.
     @GetMapping("/violations")
     public List<ViolationResponse> getViolations(
             @RequestParam(required = false) String type,
+            @RequestParam(required = false) String camera,
             @RequestParam(defaultValue = "10") int limit
     ) {
-        return service.getRecentViolations(type, limit);
+        return service.getRecentViolations(type, camera, limit);
     }
 
     // 프론트엔드 대시보드용 위반 통계 데이터 제공 (GET /api/stats)
+    // 기간(startDate~endDate) 및 구역(camera) 조건에 따른 통계를 반환합니다.
     @GetMapping("/stats")
     public Map<String, Integer> getStats(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) String camera
     ) {
-        return service.getStats(startDate, endDate);
+        return service.getStats(startDate, endDate, camera);
     }
 
     // 프론트엔드 실시간 알림(SSE) 수신용 스트림 연결 (GET /api/stream)
