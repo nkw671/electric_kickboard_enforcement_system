@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { TYPE_COLOR, FEED_MAX_COUNT } from '../constants'
 import { extractTime } from '../utils'
 import StatCard from '../components/StatCard'
+import ZoneCanvas from '../components/ZoneCanvas' //AI파트가 추가했습니다
 import useApi from '../hooks/useApi'
 import useSSE from '../hooks/useSSE'
 import styles from './MainPage.module.css'
@@ -12,6 +13,7 @@ function MainPage() {
 
   const [toast, setToast] = useState(null)
   const toastTimerRef = useRef(null)
+  const imgRef = useRef(null) //AI파트가 추가했습니다.
 
   useSSE('/api/stream', (violation) => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
@@ -51,11 +53,11 @@ function MainPage() {
             {connected ? 'LIVE' : 'OFFLINE'} &nbsp; CAM-01
           </div>
           {/* TODO: 실제 스트림 연결 시 아래 img 태그 사용 */}
-          {/* <img src="http://AI서버주소/stream" className={styles.stream} alt="stream" /> */}
-          <div className={styles.streamPlaceholder}>
-            영상 스트림 영역<br />
-            <small>백엔드 연결 후 활성화</small>
+          <div className={styles.streamWrapper}> 
+            <img ref={imgRef} src="http://localhost:8000/video/stream" className={styles.stream} alt="stream" />
+            <ZoneCanvas imgRef={imgRef} />
           </div>
+
         </div>
 
         {/* 실시간 알림 피드 */}

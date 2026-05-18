@@ -66,6 +66,10 @@
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }
 }
+/*ai 파트가 추가*/
+.streamWrapper {
+  position: relative;
+}
 
 .stream {
   width: 100%;

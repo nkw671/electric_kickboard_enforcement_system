@@ -50,7 +50,8 @@ npm run dev
 src/
 ├── components/
 │   ├── Layout.jsx            # 공통 헤더 및 네비게이션
-│   └── StatCard.jsx          # 통계 카드 컴포넌트
+│   ├── StatCard.jsx          # 통계 카드 컴포넌트
+│   └──  ZoneCanvas.jsx       # 영상 위 구역 그리기 캔버스
 │
 ├── hooks/
 │   ├── useApi.js             # 주기적 폴링 훅 (3초 간격)

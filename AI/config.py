@@ -1,7 +1,7 @@
 import cv2
 #전역설정
-SOURCE          = "src/1.mp4"
-MODEL_PATH      = "src/best_sgd.pt"
+SOURCE          = "src/T_Z_c_cf_c_b_e_d_amp_.mp4"
+MODEL_PATH      = "src/kickboard+helmet+background.pt"
 CONF            = 0.5
 COOLDOWN        = 3.0
 ZONE_FILE       = "zones.json"
