@@ -1,3 +1,6 @@
+import queue
+import threading
+import time
 import cv2
 from ultralytics.utils.plotting import Annotator, colors as yolo_colors
 import config
@@ -5,8 +8,9 @@ import config
 
 # 클래스명        : DetectionLoop
 # 기능           : 영상 캡처 및 YOLO 추론 루프 전담 (SRP 분리)
-# 내장 함수 목록  : __init__() - 모델, 렌더러, 판정기 초기화
-#                  run()      - 영상 캡처, YOLO 추론, 프레임 인코딩 루프 실행
+# 내장 함수 목록  : __init__()   - 모델, 렌더러, 판정기 초기화
+#                  _capture()   - 별도 스레드에서 프레임 캡처 및 큐 공급
+#                  run()        - 큐에서 프레임을 받아 YOLO 추론 및 인코딩 루프 실행
 class DetectionLoop:
 
     # 함수 이름 : __init__()
@@ -19,26 +23,49 @@ class DetectionLoop:
         self.model    = model
         self.renderer = renderer
         self.decider  = decider
+        self._q       = queue.Queue(maxsize=1)  # 추론이 느릴 때 오래된 프레임을 버린다.
 
-    # 함수 이름 : run()
-    # 기능      : 영상을 프레임 단위로 읽고 YOLO 로 추적하면서 decider.check() 를 호출한다.
-    #             처리된 프레임을 JPEG 로 인코딩하여 config.latest_frame 에 저장한다.
+    # 함수 이름 : _capture()
+    # 기능      : 별도 스레드에서 영상을 읽어 큐에 최신 프레임만 유지한다.
+    #             큐가 가득 찬 경우 오래된 프레임을 꺼내 버리고 새 프레임으로 교체한다.
     # 파라미터  : 없음
     # 반환값    : 없음
-    def run(self):
+    def _capture(self):
         cap = cv2.VideoCapture(config.SOURCE)
-        print("\n[감지 루프 시작]\n")
-
+        fps = cap.get(cv2.CAP_PROP_FPS) or 30    # 영상 FPS를 읽어 프레임 간격을 계산한다.
+        delay = 1.0 / fps
         while True:
             ret, frame = cap.read()
             if not ret:                         # 영상 끝에 도달하면 처음부터 재생한다.
                 cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
                 continue
+            try:
+                self._q.put_nowait(frame)
+            except queue.Full:
+                try:
+                    self._q.get_nowait()        # 오래된 프레임 제거
+                except queue.Empty:
+                    pass
+                self._q.put_nowait(frame)       # 최신 프레임으로 교체
+            time.sleep(delay)                   # 실시간 재생 속도 유지
+        cap.release()
 
+    # 함수 이름 : run()
+    # 기능      : 캡처 스레드를 시작하고 큐에서 프레임을 받아 YOLO 로 추적하면서 decider.check() 를 호출한다.
+    #             처리된 프레임을 JPEG 로 인코딩하여 config.latest_frame 에 저장한다.
+    # 파라미터  : 없음
+    # 반환값    : 없음
+    def run(self):
+        threading.Thread(target=self._capture, daemon=True).start()
+        print("\n[감지 루프 시작]\n")
+
+        while True:
+            frame = self._q.get()               # 최신 프레임이 올 때까지 대기
+            frame = cv2.resize(frame, config.INFER_SIZE)  # 추론 전 해상도 축소
             # YOLO 로 객체를 추적한다.
             results = self.model.track(
                 frame, persist=True, conf=config.CONF, verbose=False,
-                tracker="bytetrack.yaml", vid_stride=3
+                tracker="bytetrack.yaml", vid_stride=2
             )
 
             self.renderer.draw_zones(frame)     # Zone 오버레이 렌더링
@@ -66,5 +93,3 @@ class DetectionLoop:
             # 프레임을 JPEG 로 인코딩하여 스트리밍용 전역 변수에 저장한다.
             _, buf = cv2.imencode(".jpg", frame, config.ENCODE_PARAMS)
             config.latest_frame = buf.tobytes()
-
-        cap.release()

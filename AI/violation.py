@@ -75,7 +75,7 @@ class SidewalkViolation(ViolationStrategy):
         for zone in self.zone_drawer.zones:
             poly = np.array(zone["pts"], dtype=np.int32)
             if cv2.pointPolygonTest(poly, (cx, cy), False) >= 0:
-                return "인도주행"
+                return "인도 주행"
         return None
 
 
@@ -94,7 +94,7 @@ class DoubleRidingViolation(ViolationStrategy):
     # 반환값    : str | None -> "다인탑승" 또는 None
     def check(self, boxes: list, labels: list, idx: int) -> str | None:
         if labels[idx] == self.DOUBLE_LABEL:
-            return "다인탑승"
+            return "다인 탑승"
         return None
 
 
