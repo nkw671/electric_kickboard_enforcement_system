@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import styles from './ZonePage.module.css'
 
-// AI 영상 입력 해상도와 반드시 일치시킬 것. 다르면 그린 구역이 영상과 어긋난다.
-const CANVAS_W = 640
-const CANVAS_H = 480
+// AI 영상 입력 해상도(detection.py의 INFER_SIZE)와 반드시 일치시킬 것. 다르면 그린 구역이 영상과 어긋난다.
+const CANVAS_W = 800
+const CANVAS_H = 450
 
 const ZONE_COLORS_BGR = [
   [0,   0,   255],
@@ -28,6 +28,7 @@ function ZonePage() {
   const [isDrawing, setIsDrawing] = useState(false)
   const [status, setStatus] = useState(null)
   const [aiConnected, setAiConnected] = useState(false)
+  const [streamError, setStreamError] = useState(false)
 
   useEffect(() => {
     fetch('/ai/zones')
@@ -44,20 +45,6 @@ function ZonePage() {
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     ctx.clearRect(0, 0, CANVAS_W, CANVAS_H)
-
-    // 배경
-    ctx.fillStyle = '#1e293b'
-    ctx.fillRect(0, 0, CANVAS_W, CANVAS_H)
-
-    if (!aiConnected) {
-      ctx.fillStyle = '#475569'
-      ctx.font = '16px sans-serif'
-      ctx.textAlign = 'center'
-      ctx.fillText('AI 서버 연결 후 활성화', CANVAS_W / 2, CANVAS_H / 2 - 10)
-      ctx.font = '13px sans-serif'
-      ctx.fillText('(http://localhost:8000)', CANVAS_W / 2, CANVAS_H / 2 + 14)
-      ctx.textAlign = 'left'
-    }
 
     // 저장된 존 렌더링
     zones.forEach(zone => {
@@ -113,7 +100,7 @@ function ZonePage() {
         ctx.stroke()
       })
     }
-  }, [zones, currentPts, aiConnected])
+  }, [zones, currentPts])
 
   const handleCanvasClick = (e) => {
     if (!isDrawing) return
@@ -180,13 +167,28 @@ function ZonePage() {
             <span className={styles.connLabel}>{aiConnected ? 'AI 서버 연결됨' : 'AI 서버 미연결'}</span>
             {isDrawing && <span className={styles.drawingBadge}>그리는 중 — 클릭으로 꼭짓점 추가</span>}
           </div>
-          <canvas
-            ref={canvasRef}
-            width={CANVAS_W}
-            height={CANVAS_H}
-            className={`${styles.canvas} ${isDrawing ? styles.canvasDrawing : ''}`}
-            onClick={handleCanvasClick}
-          />
+          <div className={styles.canvasStage}>
+            {aiConnected && !streamError ? (
+              <img
+                src="/ai/video/stream"
+                className={styles.canvasVideo}
+                alt="stream"
+                onError={() => setStreamError(true)}
+              />
+            ) : (
+              <div className={styles.canvasPlaceholder}>
+                AI 서버 연결 후 활성화
+                <small>(http://localhost:8000)</small>
+              </div>
+            )}
+            <canvas
+              ref={canvasRef}
+              width={CANVAS_W}
+              height={CANVAS_H}
+              className={`${styles.canvas} ${isDrawing ? styles.canvasDrawing : ''}`}
+              onClick={handleCanvasClick}
+            />
+          </div>
           <div className={styles.canvasFooter}>
             {!isDrawing ? (
               <button className={styles.btnPrimary} onClick={() => setIsDrawing(true)}>
