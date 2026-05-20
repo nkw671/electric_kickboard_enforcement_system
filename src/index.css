@@ -5,9 +5,9 @@
 }
 
 body {
-  font-family: 'Malgun Gothic', '맑은 고딕', 'Segoe UI', sans-serif;
-  background-color: #eef1f6;
-  color: #1a2744;
+  font-family: 'Segoe UI', 'Malgun Gothic', '맑은 고딕', system-ui, -apple-system, sans-serif;
+  background-color: #f1f5f9;
+  color: #0f172a;
   -webkit-font-smoothing: antialiased;
 }
 
