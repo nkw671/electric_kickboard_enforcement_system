@@ -72,7 +72,7 @@ src/main/java/com/kickboard/back/
 
 ```text
 [ AI 영상 분석 서버 ]
-        │ (POST JSON: 위반 유형, 사진 URL, 카메라 번호, 신뢰도, 상세 위치)
+        │ (POST JSON: 위반 유형, 사진 URL, 카메라 번호, 상세 위치, 신뢰도)
         ▼
 [ Controller ] ──(DTO)──▶ [ Service ] ──(Entity)──▶ [ Repository ]
        │                       │                         │
@@ -94,10 +94,15 @@ src/main/java/com/kickboard/back/
 
 ### 1\. 단속 데이터 수신 (AI -\> Back)
 
-AI 서버에서 감지한 위반 데이터를 DB에 저장하고, 연결된 프론트엔드 클라이언트들에게 실시간으로 방송합니다. 입력된 데이터의 유효성(Validation)을 검사합니다.
+AI 서버에서 감지한 위반 데이터를 DB에 저장하고, 연결된 프론트엔드 클라이언트들에게 실시간으로 방송합니다. 입력된 데이터의 유효성을 검사합니다.
 
   * **URL:** `POST /api/violations`
   * **Request Body (JSON):**
+    * `type` (필수): 위반 유형
+    * `image_url` (필수): 단속 사진 URL
+    * `camera` (필수): 카메라 구역 번호
+    * `location` (선택): 위반이 발생한 상세 위치
+    * `confidence` (필수): 신뢰도
     ```json
     {
       "type": "인도 주행",
@@ -107,7 +112,6 @@ AI 서버에서 감지한 위반 데이터를 DB에 저장하고, 연결된 프�
       "confidence": 94
     }
     ```
-    * `location` (선택): 위반이 발생한 상세 위치
   * **Response:** `200 OK` "단속 데이터 저장 성공"
   * **Response:** `400 Bad Request` (필수 데이터가 누락되거나 조건에 맞지 않을 경우 반려 사유 반환)
     ```json
