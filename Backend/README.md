@@ -58,9 +58,12 @@ src/main/java/com/kickboard/back/
 ├── entity/                       #  DB 테이블과 1:1 매핑되는 엔티티
 │   └── ViolationRecord.java
 │
-└── dto/                          # AI, 프론트와 주고받는 데이터 전송 객체
-    ├── ViolationCreateRequest.java   # AI -> Back 수신용 DTO
-    └── ViolationResponse.java        # Back -> Front 송신용 DTO
+├── dto/                          # AI, 프론트와 주고받는 데이터 전송 객체
+│   ├── ViolationCreateRequest.java   # AI -> Back 수신용 DTO (유효성 검사 포함)
+│   └── ViolationResponse.java        # Back -> Front 송신용 DTO
+│
+└── exception/                    # 전역 예외 처리기
+    └── GlobalExceptionHandler.java
 ```
 
 -----
@@ -72,6 +75,9 @@ src/main/java/com/kickboard/back/
         │ (POST JSON: 위반 유형, 사진 URL, 카메라 번호, 신뢰도)
         ▼
 [ Controller ] ──(DTO)──▶ [ Service ] ──(Entity)──▶ [ Repository ]
+       │                       │                         │
+  (유효성 검사 실패 시)        │                         │
+   400 에러 반환               │                         │
                                │                         │
        (SSE 실시간 알림 푸시) ─┘                         ▼
 [ 프론트엔드 웹 ] ◀──(DTO)── [ Service ] ◀──(Entity)── [ MySQL DB ]
@@ -88,7 +94,7 @@ src/main/java/com/kickboard/back/
 
 ### 1\. 단속 데이터 수신 (AI -\> Back)
 
-AI 서버에서 감지한 위반 데이터를 DB에 저장하고, 연결된 프론트엔드 클라이언트들에게 실시간으로 방송합니다.
+AI 서버에서 감지한 위반 데이터를 DB에 저장하고, 연결된 프론트엔드 클라이언트들에게 실시간으로 방송합니다. 입력된 데이터의 유효성(Validation)을 검사합니다.
 
   * **URL:** `POST /api/violations`
   * **Request Body (JSON):**
@@ -101,6 +107,13 @@ AI 서버에서 감지한 위반 데이터를 DB에 저장하고, 연결된 프�
     }
     ```
   * **Response:** `200 OK` ("단속 데이터 저장 성공")
+  * **Response:** `400 Bad Request` (필수 데이터가 누락되거나 조건에 맞지 않을 경우 반려 사유 반환)
+    ```json
+    {
+      "type": "위반 유형(type)은 필수 입력값입니다.",
+      "confidence": "신뢰도는 100 이하여야 합니다."
+    }
+    ```
 
 ### 2\. 단속 기록 조회 (Back -\> Front)
 
