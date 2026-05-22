@@ -2,33 +2,43 @@
   text-align: center;
   padding: 40px;
   color: #5a6a85;
-  font-size: 15px;
+  font-size: 17px;
 }
 
 .statusError {
   text-align: center;
   padding: 40px;
   color: #b91c1c;
-  font-size: 15px;
+  font-size: 17px;
 }
 
 .page {
+  max-width: 1100px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-/* 상단: 영상 + 피드 */
-.topSection {
-  display: grid;
-  grid-template-columns: 1fr 320px;
   gap: 20px;
 }
 
-@media (max-width: 768px) {
-  .topSection {
+.pageTitle {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+/* 2컬럼 그리드: 영상 + 사이드바 */
+.contentGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .contentGrid {
     grid-template-columns: 1fr;
   }
 }
@@ -36,38 +46,95 @@
 /* 영상 스트림 */
 .streamBox {
   background-color: #ffffff;
-  border: 1px solid #d0d7e3;
-  border-radius: 4px;
+  border: 1px solid #e8ecf3;
+  border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 1px 4px rgba(0, 40, 85, 0.08);
+  box-shadow: 0 2px 10px rgba(0, 40, 85, 0.07);
 }
 
 .streamHeader {
-  padding: 10px 16px;
-  font-size: 13px;
+  padding: 16px 20px;
+  background-color: #111827;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.streamHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.camIcon {
+  width: 22px;
+  height: 22px;
+  color: #9ca3af;
+  flex-shrink: 0;
+}
+
+.streamInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.streamCamName {
+  font-size: 17px;
   font-weight: 700;
   color: #ffffff;
-  background-color: #002855;
+  letter-spacing: -0.2px;
+}
+
+.streamCamSub {
+  font-size: 14px;
+  color: rgba(255,255,255,0.65);
+}
+
+.streamBadges {
   display: flex;
   align-items: center;
   gap: 8px;
-  letter-spacing: 0.5px;
+  pointer-events: auto;
 }
 
-.liveDot {
+.recordBadge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #dc2626;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 6px;
+}
+
+.recordDot {
   display: inline-block;
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  animation: blink 1.4s infinite;
+  background-color: #ffffff;
+  animation: blink 1.2s infinite;
+}
+
+.liveBadge {
+  border: 1px solid #4b5563;
+  color: #d1d5db;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: 6px;
 }
 
 @keyframes blink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.3; }
 }
-/*ai 파트가 추가*/
-.streamWrapper {
+
+.streamBody {
   position: relative;
 }
 
@@ -76,44 +143,131 @@
   display: block;
 }
 
+.streamTimestamp {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #ffffff;
+  background-color: rgba(0, 0, 0, 0.5);
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.3px;
+  pointer-events: none;
+}
+
 .streamPlaceholder {
-  height: 360px;
+  width: 100%;
+  height: 480px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #8a9bb5;
-  font-size: 15px;
+  background-color: #e2e8f0;
+  color: #94a3b8;
+  font-size: 17px;
   text-align: center;
   gap: 8px;
-  background-color: #f5f7fb;
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.streamPlaceholder:hover {
+  background-color: #cbd5e1;
 }
 
 .streamPlaceholder small {
-  font-size: 12px;
+  font-size: 14px;
   color: #a0aec0;
 }
 
-/* 실시간 피드 */
-.feedBox {
-  background-color: #ffffff;
-  border: 1px solid #d0d7e3;
-  border-radius: 4px;
-  overflow: hidden;
-  box-shadow: 0 1px 4px rgba(0, 40, 85, 0.08);
+/* 사이드바 */
+.sidebar {
   display: flex;
   flex-direction: column;
+  gap: 16px;
 }
 
-.feedTitle {
+.sideCard {
+  background-color: #ffffff;
+  border: 1px solid #e8ecf3;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 10px rgba(0, 40, 85, 0.07);
+}
+
+.sideCardHeader {
+  padding: 18px 20px;
+  border-bottom: 1px solid #e8ecf3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sideCardTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.shieldIcon {
+  width: 19px;
+  height: 19px;
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+.sideCardTitle {
+  font-size: 17px;
+  font-weight: 700;
+  color: #374151;
+}
+
+.statusBadge {
   font-size: 13px;
   font-weight: 700;
   color: #ffffff;
-  background-color: #002855;
-  padding: 10px 16px;
-  letter-spacing: 0.5px;
+  background-color: #16a34a;
+  padding: 4px 12px;
+  border-radius: 12px;
 }
 
+/* 미니 통계 2x2 그리드 */
+.miniStats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  padding: 16px;
+  background-color: #ffffff;
+}
+
+.miniStat {
+  background-color: #f1f5f9;
+  border-radius: 10px;
+  padding: 20px 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.miniVal {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.miniLbl {
+  font-size: 13px;
+  color: #475569;
+  font-weight: 500;
+}
+
+/* 실시간 피드 */
 .feedList {
   list-style: none;
   display: flex;
@@ -125,19 +279,18 @@
 .feedItem {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  background-color: #f5f7fb;
-  border: 1px solid #e2e8f0;
-  border-left: 3px solid #002855;
-  border-radius: 2px;
-  font-size: 13px;
+  gap: 10px;
+  padding: 13px 14px;
+  background-color: #f8fafc;
+  border: 1px solid #e8ecf3;
+  border-radius: 6px;
+  font-size: 15px;
 }
 
 .feedBadge {
-  padding: 2px 8px;
-  border-radius: 2px;
-  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 13px;
   font-weight: 700;
   color: #fff;
   white-space: nowrap;
@@ -145,34 +298,15 @@
 
 .feedCamera {
   color: #5a6a85;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
 }
 
 .feedTime {
   margin-left: auto;
-  color: #8a9bb5;
-  font-size: 12px;
+  color: #a0aec0;
+  font-size: 14px;
   font-variant-numeric: tabular-nums;
-}
-
-/* 통계 카드 */
-.statsSection {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-}
-
-@media (max-width: 768px) {
-  .statsSection {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 480px) {
-  .statsSection {
-    grid-template-columns: 1fr;
-  }
 }
 
 /* 토스트 알림 */
@@ -181,13 +315,13 @@
   top: 80px;
   right: 24px;
   background-color: #ffffff;
-  border: 1px solid #d0d7e3;
-  border-left: 4px solid #002855;
-  border-radius: 4px;
-  padding: 12px 16px;
-  box-shadow: 0 4px 16px rgba(0, 20, 60, 0.15);
+  border: 1px solid #e8ecf3;
+  border-left: 4px solid #2563eb;
+  border-radius: 8px;
+  padding: 14px 18px;
+  box-shadow: 0 4px 20px rgba(0, 20, 60, 0.12);
   z-index: 300;
-  min-width: 220px;
+  min-width: 240px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -200,9 +334,9 @@
 }
 
 .toastLabel {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
-  color: #5a6a85;
+  color: #8a9bb5;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -214,22 +348,22 @@
 }
 
 .toastBadge {
-  padding: 2px 8px;
-  border-radius: 2px;
-  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 13px;
   font-weight: 700;
   color: #fff;
   white-space: nowrap;
 }
 
 .toastCamera {
-  font-size: 13px;
+  font-size: 15px;
   color: #1a2744;
   font-weight: 600;
 }
 
 .toastConf {
   margin-left: auto;
-  font-size: 12px;
-  color: #5a6a85;
+  font-size: 14px;
+  color: #8a9bb5;
 }

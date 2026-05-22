@@ -6,6 +6,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': 'http://localhost:8080',
+      '/ai':  { target: 'http://localhost:8000', rewrite: path => path.replace(/^\/ai/, '') },
     },
   },
 })
