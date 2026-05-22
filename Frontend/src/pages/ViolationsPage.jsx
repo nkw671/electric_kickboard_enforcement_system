@@ -55,7 +55,7 @@ function ViolationsPage() {
   const [page, setPage] = useState(1)
   const [selected, setSelected] = useState(null)
 
-  const { data: apiData, loading } = useApi('/api/violations')
+  const { data: apiData, loading } = useApi('/api/violations?limit=9999')
   const violations = (apiData && apiData.length > 0) ? apiData : DUMMY_VIOLATIONS
 
   useEffect(() => {
