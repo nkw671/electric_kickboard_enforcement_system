@@ -1,8 +1,6 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { TYPE_COLOR, FEED_MAX_COUNT } from '../constants'
 import { extractTime } from '../utils'
-import StatCard from '../components/StatCard'
-import ZoneCanvas from '../components/ZoneCanvas' //AI파트가 추가했습니다
 import useApi from '../hooks/useApi'
 import useSSE from '../hooks/useSSE'
 import styles from './MainPage.module.css'
@@ -13,7 +11,32 @@ function MainPage() {
 
   const [toast, setToast] = useState(null)
   const toastTimerRef = useRef(null)
-  const imgRef = useRef(null) //AI파트가 추가했습니다.
+  const [currentTime, setCurrentTime] = useState('')
+  const [streamError, setStreamError] = useState(false)
+  const [streamKey, setStreamKey] = useState(0)
+
+  const retryStream = () => {
+    setStreamError(false)
+    setStreamKey(k => k + 1)
+  }
+
+  useEffect(() => {
+    const tick = () => {
+      const now = new Date()
+      const y = now.getFullYear()
+      const m = now.getMonth() + 1
+      const d = now.getDate()
+      const h = now.getHours()
+      const min = String(now.getMinutes()).padStart(2, '0')
+      const sec = String(now.getSeconds()).padStart(2, '0')
+      const ampm = h < 12 ? '오전' : '오후'
+      const h12 = h % 12 || 12
+      setCurrentTime(`${y}. ${m}. ${d}. ${ampm} ${h12}:${min}:${sec}`)
+    }
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [])
 
   useSSE('/api/stream', (violation) => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
@@ -41,51 +64,105 @@ function MainPage() {
           </div>
         </div>
       )}
-      {/* 영상 + 알림 영역 */}
-      <div className={styles.topSection}>
+
+      <h2 className={styles.pageTitle}>실시간 단속 모니터링</h2>
+      <div className={styles.contentGrid}>
         {/* 영상 스트림 */}
         <div className={styles.streamBox}>
           <div className={styles.streamHeader}>
-            <span
-              className={styles.liveDot}
-              style={{ backgroundColor: connected ? '#22c55e' : '#64748b' }}
-            />
-            {connected ? 'LIVE' : 'OFFLINE'} &nbsp; CAM-01
-          </div>
-          {/* TODO: 실제 스트림 연결 시 아래 img 태그 사용 */}
-          <div className={styles.streamWrapper}> 
-            <img ref={imgRef} src="http://localhost:8000/video/stream" className={styles.stream} alt="stream" />
-            <ZoneCanvas imgRef={imgRef} />
-          </div>
-
-        </div>
-
-        {/* 실시간 알림 피드 */}
-        <div className={styles.feedBox}>
-          <div className={styles.feedTitle}>실시간 위반 알림</div>
-          <ul className={styles.feedList}>
-            {violations.slice(0, FEED_MAX_COUNT).map((v) => (
-              <li key={v.id} className={styles.feedItem}>
-                <span
-                  className={styles.feedBadge}
-                  style={{ backgroundColor: TYPE_COLOR[v.type] || '#64748b' }}
-                >
-                  {v.type}
+            <div className={styles.streamHeaderLeft}>
+              <svg className={styles.camIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="23 7 16 12 23 17 23 7"/>
+                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+              </svg>
+              <div className={styles.streamInfo}>
+                <div className={styles.streamCamName}>CAM-01</div>
+                <div className={styles.streamCamSub}>실시간 단속 카메라</div>
+              </div>
+            </div>
+            <div className={styles.streamBadges}>
+              {connected && (
+                <span className={styles.recordBadge}>
+                  <span className={styles.recordDot} /> 녹화 중
                 </span>
-                <span className={styles.feedCamera}>{v.camera}</span>
-                <span className={styles.feedTime}>{extractTime(v.timestamp)}</span>
-              </li>
-            ))}
-          </ul>
+              )}
+              <span className={styles.liveBadge}>실시간</span>
+            </div>
+          </div>
+          <div className={styles.streamBody}>
+            {!streamError ? (
+              <img
+                src={`/ai/video/stream?t=${streamKey}`}
+                className={styles.stream}
+                alt="stream"
+                onError={() => setStreamError(true)}
+              />
+            ) : (
+              <button className={styles.streamPlaceholder} onClick={retryStream}>
+                영상 스트림 영역<br />
+                <small>AI 서버 연결 후 활성화 · 클릭하여 재연결</small>
+              </button>
+            )}
+            {currentTime && (
+              <span className={styles.streamTimestamp}>{currentTime}</span>
+            )}
+          </div>
         </div>
-      </div>
 
-      {/* 통계 카드 */}
-      <div className={styles.statsSection}>
-        <StatCard label="오늘 총 위반" value={stats.total} color="#002855" />
-        <StatCard label="헬멧 미착용" value={stats.helmet} color="#b91c1c" />
-        <StatCard label="인도 주행" value={stats.sidewalk} color="#7c3aed" />
-        <StatCard label="다인 탑승" value={stats.multiRider} color="#b45309" />
+        {/* 우측 사이드바 */}
+        <div className={styles.sidebar}>
+          {/* 시스템 상태 */}
+          <div className={styles.sideCard}>
+            <div className={styles.sideCardHeader}>
+              <div className={styles.sideCardTitleRow}>
+                <svg className={styles.shieldIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                <span className={styles.sideCardTitle}>시스템 상태</span>
+              </div>
+              <span className={styles.statusBadge}>정상 작동</span>
+            </div>
+            <div className={styles.miniStats}>
+              <div className={styles.miniStat}>
+                <span className={styles.miniVal} style={{ color: '#002855' }}>{stats.total}</span>
+                <span className={styles.miniLbl}>오늘 총 위반</span>
+              </div>
+              <div className={styles.miniStat}>
+                <span className={styles.miniVal} style={{ color: '#2563eb' }}>{stats.helmet}</span>
+                <span className={styles.miniLbl}>헬멧 미착용</span>
+              </div>
+              <div className={styles.miniStat}>
+                <span className={styles.miniVal} style={{ color: '#2563eb' }}>{stats.sidewalk}</span>
+                <span className={styles.miniLbl}>인도 주행</span>
+              </div>
+              <div className={styles.miniStat}>
+                <span className={styles.miniVal} style={{ color: '#2563eb' }}>{stats.multiRider}</span>
+                <span className={styles.miniLbl}>다인 탑승</span>
+              </div>
+            </div>
+          </div>
+
+          {/* 실시간 알림 */}
+          <div className={styles.sideCard}>
+            <div className={styles.sideCardHeader}>
+              <span className={styles.sideCardTitle}>실시간 위반 알림</span>
+            </div>
+            <ul className={styles.feedList}>
+              {violations.slice(0, FEED_MAX_COUNT).map((v) => (
+                <li key={v.id} className={styles.feedItem}>
+                  <span
+                    className={styles.feedBadge}
+                    style={{ backgroundColor: TYPE_COLOR[v.type] || '#64748b' }}
+                  >
+                    {v.type}
+                  </span>
+                  <span className={styles.feedCamera}>{v.camera}</span>
+                  <span className={styles.feedTime}>{extractTime(v.timestamp)}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
   )
