@@ -26,6 +26,8 @@ public class ViolationResponse {
 
     private Integer confidence;
 
+    private String location;
+
     public ViolationResponse(ViolationRecord record) {
         this.id = record.getId();
         this.violationType = record.getViolationType();
@@ -33,5 +35,6 @@ public class ViolationResponse {
         this.createdAt = record.getCreatedAt();
         this.camera = record.getCamera();
         this.confidence = record.getConfidence();
+        this.location = record.getLocation();
     }
 }

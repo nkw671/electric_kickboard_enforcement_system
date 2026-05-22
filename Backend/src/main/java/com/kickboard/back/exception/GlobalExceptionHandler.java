@@ -1,5 +1,6 @@
 package com.kickboard.back.exception;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -11,6 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 // 전역 예외 처리 및 에러 응답 포맷팅 클래스
+@Hidden
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 

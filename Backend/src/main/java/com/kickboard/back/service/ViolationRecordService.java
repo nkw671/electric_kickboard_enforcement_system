@@ -60,6 +60,7 @@ public class ViolationRecordService {
         record.setImageUrl(request.getImageUrl());
         record.setCamera(request.getCamera());
         record.setConfidence(request.getConfidence());
+        record.setLocation(request.getLocation());
 
         ViolationRecord savedRecord = repository.save(record);
         ViolationResponse response = new ViolationResponse(savedRecord);

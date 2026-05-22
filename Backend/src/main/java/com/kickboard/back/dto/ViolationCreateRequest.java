@@ -31,4 +31,6 @@ public class ViolationCreateRequest {
     @Max(value = 100, message = "신뢰도는 100 이하여야 합니다.")
     private Integer confidence;
 
+    private String location;
+
 }
