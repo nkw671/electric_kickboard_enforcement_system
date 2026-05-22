@@ -117,5 +117,20 @@ fabric.properties
 
 temp/
 training_data/
-AI/zones.json
+AI/zones.jsong
 kickboard.v1-test1.yolo26/
+src/1.mp4
+src/test.mp4
+node_modules/
+.vscode/
+CLAUDE.md
+/yolo26n.pt
+/.claude/
+/new_train/
+/src/T_Z_c_cf_c_b_e_d_amp_.mp4
+/src/YTDown_Shorts_Man-On-Electric-scooter-going-65-MPH-on-_Media_HyN1szaV5Jc_001_1080p.mp4
+/src/YTDown_Shorts_Media_LjT_7LBDzGw_001_720p.mp4
+/src/YTDown_YouTube_Electric-scooter-CRASH-at-crosswalk_Media_v3H4ZNmgZfI_002_480p.mp4
+/src/YTDown_YouTube_Media_fktVF6dBGXw_002_720p.mp4
+/src/YTDown_YouTube_Media_m-tjrKS3gcU_003_480p.mp4
+/src/YTDown_YouTube_Media_yOzYBpC4YUc_001_1080p.mp4

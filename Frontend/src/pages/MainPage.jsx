@@ -1,0 +1,94 @@
+import { useState, useRef } from 'react'
+import { TYPE_COLOR, FEED_MAX_COUNT } from '../constants'
+import { extractTime } from '../utils'
+import StatCard from '../components/StatCard'
+import ZoneCanvas from '../components/ZoneCanvas' //AI파트가 추가했습니다
+import useApi from '../hooks/useApi'
+import useSSE from '../hooks/useSSE'
+import styles from './MainPage.module.css'
+
+function MainPage() {
+  const { data: violations, loading, error, connected } = useApi('/api/violations?limit=10')
+  const { data: stats } = useApi('/api/stats')
+
+  const [toast, setToast] = useState(null)
+  const toastTimerRef = useRef(null)
+  const imgRef = useRef(null) //AI파트가 추가했습니다.
+
+  useSSE('/api/stream', (violation) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+    setToast(violation)
+    toastTimerRef.current = setTimeout(() => setToast(null), 4000)
+  })
+
+  if (loading || !stats) return <div className={styles.status}>불러오는 중...</div>
+  if (error) return <div className={styles.statusError}>서버에 연결할 수 없습니다.</div>
+
+  return (
+    <div className={styles.page}>
+      {toast && (
+        <div className={styles.toast}>
+          <span className={styles.toastLabel}>새 위반 감지</span>
+          <div className={styles.toastContent}>
+            <span
+              className={styles.toastBadge}
+              style={{ backgroundColor: TYPE_COLOR[toast.type] || '#64748b' }}
+            >
+              {toast.type}
+            </span>
+            <span className={styles.toastCamera}>{toast.camera}</span>
+            <span className={styles.toastConf}>{toast.confidence}%</span>
+          </div>
+        </div>
+      )}
+      {/* 영상 + 알림 영역 */}
+      <div className={styles.topSection}>
+        {/* 영상 스트림 */}
+        <div className={styles.streamBox}>
+          <div className={styles.streamHeader}>
+            <span
+              className={styles.liveDot}
+              style={{ backgroundColor: connected ? '#22c55e' : '#64748b' }}
+            />
+            {connected ? 'LIVE' : 'OFFLINE'} &nbsp; CAM-01
+          </div>
+          {/* TODO: 실제 스트림 연결 시 아래 img 태그 사용 */}
+          <div className={styles.streamWrapper}> 
+            <img ref={imgRef} src="http://localhost:8000/video/stream" className={styles.stream} alt="stream" />
+            <ZoneCanvas imgRef={imgRef} />
+          </div>
+
+        </div>
+
+        {/* 실시간 알림 피드 */}
+        <div className={styles.feedBox}>
+          <div className={styles.feedTitle}>실시간 위반 알림</div>
+          <ul className={styles.feedList}>
+            {violations.slice(0, FEED_MAX_COUNT).map((v) => (
+              <li key={v.id} className={styles.feedItem}>
+                <span
+                  className={styles.feedBadge}
+                  style={{ backgroundColor: TYPE_COLOR[v.type] || '#64748b' }}
+                >
+                  {v.type}
+                </span>
+                <span className={styles.feedCamera}>{v.camera}</span>
+                <span className={styles.feedTime}>{extractTime(v.timestamp)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      {/* 통계 카드 */}
+      <div className={styles.statsSection}>
+        <StatCard label="오늘 총 위반" value={stats.total} color="#002855" />
+        <StatCard label="헬멧 미착용" value={stats.helmet} color="#b91c1c" />
+        <StatCard label="인도 주행" value={stats.sidewalk} color="#7c3aed" />
+        <StatCard label="다인 탑승" value={stats.multiRider} color="#b45309" />
+      </div>
+    </div>
+  )
+}
+
+export default MainPage

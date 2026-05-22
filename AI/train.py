@@ -1,16 +1,34 @@
+from torch.cuda import device
 from ultralytics import YOLO
 def main():
-    # 1. 모델 로드 (이미 가지고 계신 yolo26n.pt 사용)
-    model = YOLO('temp/yolo26n.pt')
 
-    # 2. 학습 실행 (모든 코드는 이 if __name__ == '__main__': 블록 안에 있어야 합니다)
+
+
+
+
+    model = YOLO('../temp/yolo26n.pt')
+
     model.train(
-        data='C:/Kickboard_project/training_data/data.yaml',
-        epochs=50,
-        imgsz=640,
-        device=0,      # 이제 GPU가 잘 잡히니 0으로 쓰시면 됩니다!
-        workers=0      # 에러가 계속나면 workers를 0으로 설정해 보세요.
+        data=r'C:\Projects\Kickboard_project\AI\new_train\kickboard+helmet+background_v2-1\data.yaml',
+        epochs=200,
+        imgsz=800,
+        device=0,
+        workers=0,
+        optimizer='SGD',
+        lr0=0.001,
+        weight_decay=0.001,
+        # 아래 인자들은 공식 문서에 명시된 하이퍼파라미터입니다.
+        cls=1.2,  # 분류(헬멧 유무)에 더 집중
+        dfl=2.0,  # 박스 경계 정교화 강화
+        box=8.5,  # 위치 예측 가중치 상향
+        cos_lr=True  # 학습률 부드럽게 감소
     )
 
+    # 경로 앞에 r을 붙여서 윈도우 역슬래시(\) 경로 오작동을 방지합니다.
+    #model = YOLO(r"C:\ai\stable-diffusion-webui\runs\detect\train27\weights\last.pt")
+
+    # resume=True를 주면 train27 환경 그대로 이어서 학습이 시작됩니다.
+
+    #model.train(resume=True)
 if __name__ == '__main__':
     main()

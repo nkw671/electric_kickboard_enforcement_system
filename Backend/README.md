@@ -10,6 +10,7 @@
 | 데이터베이스 | MySQL 8.0, Spring Data JPA |
 | 라이브러리 | Lombok |
 | API 문서화 | Swagger (Springdoc OpenAPI) |
+| 실시간 통신 | SSE (Server-Sent Events) |
 
 -----
 
@@ -48,7 +49,7 @@ src/main/java/com/kickboard/back/
 ├── controller/                   # API 엔드포인트 및 HTTP 요청 처리
 │   └── ViolationRecordController.java
 │
-├── service/                      # 비즈니스 로직 및 데이터 가공
+├── service/                      # 비즈니스 로직, 데이터 가공 및 SSE 알림 방송
 │   └── ViolationRecordService.java
 │
 ├── repository/                   # DB 접근 및 쿼리 실행 (Spring Data JPA)
@@ -71,10 +72,10 @@ src/main/java/com/kickboard/back/
         │ (POST JSON: 위반 유형, 사진 URL, 카메라 번호, 신뢰도)
         ▼
 [ Controller ] ──(DTO)──▶ [ Service ] ──(Entity)──▶ [ Repository ]
-                                                         │
-                                                         ▼
+                               │                         │
+       (SSE 실시간 알림 푸시) ─┘                         ▼
 [ 프론트엔드 웹 ] ◀──(DTO)── [ Service ] ◀──(Entity)── [ MySQL DB ]
-        (GET JSON: 위반 목록, 통계)
+        (GET JSON: 위반 목록, 통계 / GET SSE: 실시간 스트림 구독)
 ```
 
 -----
@@ -87,7 +88,7 @@ src/main/java/com/kickboard/back/
 
 ### 1\. 단속 데이터 수신 (AI -\> Back)
 
-AI 서버에서 감지한 위반 데이터를 DB에 저장합니다.
+AI 서버에서 감지한 위반 데이터를 DB에 저장하고, 연결된 프론트엔드 클라이언트들에게 실시간으로 방송합니다.
 
   * **URL:** `POST /api/violations`
   * **Request Body (JSON):**
@@ -103,11 +104,14 @@ AI 서버에서 감지한 위반 데이터를 DB에 저장합니다.
 
 ### 2\. 단속 기록 조회 (Back -\> Front)
 
-프론트엔드 메인 페이지 및 위반 기록 페이지에서 사용할 위반 목록을 최신순으로 반환합니다.
+프론트엔드 메인 페이지 및 위반 기록 페이지에서 사용할 위반 목록을 최신순으로 반환합니다. 위반 유형과 구역을 지정하면 해당 조건의 데이터만 필터링하여 제공합니다.
 
-  * **URL:** `GET /api/violations?limit={number}`
+  * **URL:** `GET /api/violations`
   * **Query Parameter:**
+      * `type` (선택): 조회할 위반 유형 (예: `헬멧 미착용`, `인도 주행`). 지정하지 않거나 `전체`로 요청 시 모든 내역 반환.
+      * `camera` (선택): 조회할 카메라 구역 (예: `CAM-01`). 지정하지 않거나 `전체`로 요청 시 모든 구역 내역 반환.
       * `limit` (선택): 가져올 데이터 개수 (기본값: 10)
+      * 예시: `GET /api/violations?type=헬멧 미착용&camera=CAM-01&limit=50`
   * **Response:**
     ```json
     [
@@ -124,9 +128,14 @@ AI 서버에서 감지한 위반 데이터를 DB에 저장합니다.
 
 ### 3\. 실시간 통계 조회 (Back -\> Front)
 
-프론트엔드 하단 통계 카드에 표시될 오늘 발생한 위반 건수를 반환합니다.
+프론트엔드 통계 카드에 표시될 위반 건수를 반환합니다. 필터 파라미터가 없을 경우 전체 누적 통계를, 파라미터가 입력될 경우 해당 기간/구역 내의 통계를 계산하여 반환합니다.
 
   * **URL:** `GET /api/stats`
+  * **Query Parameter:**
+      * `startDate` (선택): 통계 시작일 (형식: `YYYY-MM-DD`)
+      * `endDate` (선택): 통계 종료일 (형식: `YYYY-MM-DD`)
+      * `camera` (선택): 조회할 카메라 구역 (예: `CAM-01`)
+      * 예시: `GET /api/stats?startDate=2026-03-01&endDate=2026-03-31&camera=CAM-01`
   * **Response:**
     ```json
     {
@@ -135,4 +144,22 @@ AI 서버에서 감지한 위반 데이터를 DB에 저장합니다.
       "sidewalk": 3,
       "multiRider": 2
     }
+    ```
+
+### 4\. 실시간 알림 구독 (SSE) (Back -\> Front)
+
+프론트엔드가 백엔드 서버와 단방향 파이프를 연결하여 새로운 단속 데이터가 들어올 때마다 즉시 알림을 받습니다.
+
+  * **URL:** `GET /api/stream`
+  * **Response Format:** `text/event-stream`
+  * **Event Types:**
+      * `connect`: 최초 연결 성공 시 전송되는 텍스트
+      * `violation`: 새로운 위반 데이터 발생 시 전송되는 단속 객체
+    <!-- end list -->
+    ```text
+    event: connect
+    data: 연결 성공
+
+    event: violation
+    data: {"id":2, "type":"다인 탑승", "image_url":"...", "camera":"CAM-01", "confidence":94, "timestamp":"2025-03-28 15:00:00"}
     ```
