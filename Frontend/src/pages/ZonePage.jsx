@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import styles from './ZonePage.module.css'
 
-// AI 영상 입력 해상도(detection.py의 INFER_SIZE)와 반드시 일치시킬 것. 다르면 그린 구역이 영상과 어긋난다.
-const CANVAS_W = 800
-const CANVAS_H = 450
+// 스트림이 로드되기 전(미연결 등) 사용할 기본 해상도. 연결되면 영상 실제 해상도로 자동 교체된다.
+const DEFAULT_W = 800
+const DEFAULT_H = 450
 
 const ZONE_COLORS_BGR = [
   [0,   0,   255],
@@ -23,12 +23,14 @@ function bgrToHex([b, g, r]) {
 
 function ZonePage() {
   const canvasRef = useRef(null)
+  const imgRef = useRef(null)
   const [zones, setZones] = useState([])
   const [currentPts, setCurrentPts] = useState([])
   const [isDrawing, setIsDrawing] = useState(false)
   const [status, setStatus] = useState(null)
   const [aiConnected, setAiConnected] = useState(false)
   const [streamError, setStreamError] = useState(false)
+  const [videoDims, setVideoDims] = useState({ w: DEFAULT_W, h: DEFAULT_H })
 
   useEffect(() => {
     fetch('/ai/zones')
@@ -40,11 +42,31 @@ function ZonePage() {
       .catch(() => setAiConnected(false))
   }, [])
 
+  // 영상 스트림의 실제 해상도(naturalWidth/Height)를 폴링하여 좌표계를 영상에 맞춘다.
+  // AI(detection.py INFER_SIZE)가 어떤 해상도를 쓰든 자동으로 일치하므로 하드코딩이 불필요하다.
+  useEffect(() => {
+    if (!aiConnected || streamError) return
+    const img = imgRef.current
+    if (!img) return
+
+    const trySync = () => {
+      if (img.naturalWidth > 0) {
+        setVideoDims({ w: img.naturalWidth, h: img.naturalHeight })
+        return true
+      }
+      return false
+    }
+
+    if (trySync()) return
+    const timer = setInterval(() => { if (trySync()) clearInterval(timer) }, 200)
+    return () => clearInterval(timer)
+  }, [aiConnected, streamError])
+
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
-    ctx.clearRect(0, 0, CANVAS_W, CANVAS_H)
+    ctx.clearRect(0, 0, videoDims.w, videoDims.h)
 
     // 저장된 존 렌더링
     zones.forEach(zone => {
@@ -100,14 +122,14 @@ function ZonePage() {
         ctx.stroke()
       })
     }
-  }, [zones, currentPts])
+  }, [zones, currentPts, videoDims])
 
   const handleCanvasClick = (e) => {
     if (!isDrawing) return
     const canvas = canvasRef.current
     const rect = canvas.getBoundingClientRect()
-    const x = Math.round((e.clientX - rect.left) * (CANVAS_W / rect.width))
-    const y = Math.round((e.clientY - rect.top) * (CANVAS_H / rect.height))
+    const x = Math.round((e.clientX - rect.left) * (videoDims.w / rect.width))
+    const y = Math.round((e.clientY - rect.top) * (videoDims.h / rect.height))
     setCurrentPts(prev => [...prev, [x, y]])
   }
 
@@ -170,6 +192,7 @@ function ZonePage() {
           <div className={styles.canvasStage}>
             {aiConnected && !streamError ? (
               <img
+                ref={imgRef}
                 src="/ai/video/stream"
                 className={styles.canvasVideo}
                 alt="stream"
@@ -183,8 +206,8 @@ function ZonePage() {
             )}
             <canvas
               ref={canvasRef}
-              width={CANVAS_W}
-              height={CANVAS_H}
+              width={videoDims.w}
+              height={videoDims.h}
               className={`${styles.canvas} ${isDrawing ? styles.canvasDrawing : ''}`}
               onClick={handleCanvasClick}
             />
