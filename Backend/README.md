@@ -8,7 +8,7 @@
 | 프레임워크 | Spring Boot 4.0 |
 | 빌드 도구 | Gradle (Groovy) |
 | 데이터베이스 | MySQL 8.0, Spring Data JPA |
-| 라이브러리 | Lombok |
+| 라이브러리 | Lombok, Hibernate Validator |
 | API 문서화 | Swagger (Springdoc OpenAPI) |
 | 실시간 통신 | SSE (Server-Sent Events) |
 
@@ -58,9 +58,12 @@ src/main/java/com/kickboard/back/
 ├── entity/                       #  DB 테이블과 1:1 매핑되는 엔티티
 │   └── ViolationRecord.java
 │
-└── dto/                          # AI, 프론트와 주고받는 데이터 전송 객체
-    ├── ViolationCreateRequest.java   # AI -> Back 수신용 DTO
-    └── ViolationResponse.java        # Back -> Front 송신용 DTO
+├── dto/                          # AI, 프론트와 주고받는 데이터 전송 객체
+│   ├── ViolationCreateRequest.java   # AI -> Back 수신용 DTO (유효성 검사 포함)
+│   └── ViolationResponse.java        # Back -> Front 송신용 DTO
+│
+└── exception/                    # 전역 예외 처리기
+    └── GlobalExceptionHandler.java
 ```
 
 -----
@@ -69,9 +72,12 @@ src/main/java/com/kickboard/back/
 
 ```text
 [ AI 영상 분석 서버 ]
-        │ (POST JSON: 위반 유형, 사진 URL, 카메라 번호, 신뢰도)
+        │ (POST JSON: 위반 유형, 사진 URL, 카메라 번호, 상세 위치, 신뢰도)
         ▼
 [ Controller ] ──(DTO)──▶ [ Service ] ──(Entity)──▶ [ Repository ]
+       │                       │                         │
+  (유효성 검사 실패 시)        │                         │
+   400 에러 반환               │                         │
                                │                         │
        (SSE 실시간 알림 푸시) ─┘                         ▼
 [ 프론트엔드 웹 ] ◀──(DTO)── [ Service ] ◀──(Entity)── [ MySQL DB ]
@@ -88,28 +94,41 @@ src/main/java/com/kickboard/back/
 
 ### 1\. 단속 데이터 수신 (AI -\> Back)
 
-AI 서버에서 감지한 위반 데이터를 DB에 저장하고, 연결된 프론트엔드 클라이언트들에게 실시간으로 방송합니다.
+AI 서버에서 감지한 위반 데이터를 DB에 저장하고, 연결된 프론트엔드 클라이언트들에게 실시간으로 방송합니다. 입력된 데이터의 유효성을 검사합니다.
 
   * **URL:** `POST /api/violations`
   * **Request Body (JSON):**
+    * `type` (필수): 위반 유형
+    * `image_url` (필수): 단속 사진 URL
+    * `camera` (필수): 카메라 구역 번호
+    * `location` (선택): 위반이 발생한 상세 위치
+    * `confidence` (필수): 신뢰도
     ```json
     {
-      "type": "헬멧 미착용",
-      "image_url": "https://example.com/images/helmet_001.jpg",
+      "type": "인도 주행",
+      "image_url": "https://example.com/images/sidewalk_001.jpg",
       "camera": "CAM-01",
+      "location": "Zone-1",
       "confidence": 94
     }
     ```
-  * **Response:** `200 OK` ("단속 데이터 저장 성공")
+  * **Response:** `200 OK` "단속 데이터 저장 성공"
+  * **Response:** `400 Bad Request` (필수 데이터가 누락되거나 조건에 맞지 않을 경우 반려 사유 반환)
+    ```json
+    {
+      "type": "위반 유형(type)은 필수 입력값입니다.",
+      "confidence": "신뢰도는 100 이하여야 합니다."
+    }
+    ```
 
 ### 2\. 단속 기록 조회 (Back -\> Front)
 
-프론트엔드 메인 페이지 및 위반 기록 페이지에서 사용할 위반 목록을 최신순으로 반환합니다. 위반 유형과 구역을 지정하면 해당 조건의 데이터만 필터링하여 제공합니다.
+프론트엔드 메인 페이지 및 위반 기록 페이지에서 사용할 위반 목록을 최신순으로 반환합니다. 위반 유형과 카메라 번호를 지정하면 해당 조건의 데이터만 필터링하여 제공합니다.
 
   * **URL:** `GET /api/violations`
   * **Query Parameter:**
       * `type` (선택): 조회할 위반 유형 (예: `헬멧 미착용`, `인도 주행`). 지정하지 않거나 `전체`로 요청 시 모든 내역 반환.
-      * `camera` (선택): 조회할 카메라 구역 (예: `CAM-01`). 지정하지 않거나 `전체`로 요청 시 모든 구역 내역 반환.
+      * `camera` (선택): 조회할 카메라 구역 (예: `CAM-01`). 지정하지 않거나 `전체`로 요청 시 모든 내역 반환.
       * `limit` (선택): 가져올 데이터 개수 (기본값: 10)
       * 예시: `GET /api/violations?type=헬멧 미착용&camera=CAM-01&limit=50`
   * **Response:**
@@ -117,9 +136,10 @@ AI 서버에서 감지한 위반 데이터를 DB에 저장하고, 연결된 프�
     [
       {
         "id": 1,
-        "type": "헬멧 미착용",
-        "image_url": "https://example.com/images/helmet_001.jpg",
+        "type": "인도 주행",
+        "image_url": "https://example.com/images/sidewalk_001.jpg",
         "camera": "CAM-01",
+        "location": "Zone-1",
         "confidence": 94,
         "timestamp": "2025-03-28 14:32:01"
       }
@@ -161,5 +181,5 @@ AI 서버에서 감지한 위반 데이터를 DB에 저장하고, 연결된 프�
     data: 연결 성공
 
     event: violation
-    data: {"id":2, "type":"다인 탑승", "image_url":"...", "camera":"CAM-01", "confidence":94, "timestamp":"2025-03-28 15:00:00"}
+    data: {"id":1, "type":"인도 주행", "image_url":"...", "camera":"CAM-01", "location":"Zone-1", "confidence":94, "timestamp":"2025-03-28 14:32:01"}
     ```

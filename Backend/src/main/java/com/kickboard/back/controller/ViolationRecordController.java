@@ -12,6 +12,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import jakarta.validation.Valid;
 
 // AI 데이터 수신(POST) 및 프론트엔드 데이터 제공(GET)을 담당하는 API 엔드포인트 클래스
 @RestController
@@ -24,7 +25,7 @@ public class ViolationRecordController {
 
     // AI 서버로부터 단속 데이터 수신 (POST /api/violations)
     @PostMapping("/violations")
-    public String receiveViolation(@RequestBody ViolationCreateRequest request) {
+    public String receiveViolation(@Valid @RequestBody ViolationCreateRequest request) {
         service.saveViolation(request);
         return "단속 데이터 저장 성공";
     }

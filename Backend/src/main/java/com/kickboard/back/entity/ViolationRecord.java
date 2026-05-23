@@ -19,16 +19,19 @@ public class ViolationRecord {
     private Long id;
 
     @Column(nullable = false)
-    private String violationType; // 위반 종류
+    private String violationType; // 위반 유형
 
     @Column(length = 500)
-    private String imageUrl; // 위반 이미지 주소
+    private String imageUrl; // 사진 URL
 
     @Column
     private String camera; // 카메라 번호
 
     @Column
-    private Integer confidence; // AI 정확도
+    private Integer confidence; // 신뢰도
+
+    @Column
+    private String location; // 상세 위치
 
     @Column(nullable = false)
     private LocalDateTime createdAt; // 위반 발생 시간
