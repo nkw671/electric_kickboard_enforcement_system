@@ -57,9 +57,10 @@ class ConnectAPI:
     #             int   track_id       -> 객체 추적 ID
     #             float conf           -> YOLO 감지 신뢰도 (0.0 ~ 1.0)
     #             str   image_path     -> 저장된 위반 이미지 로컬 경로
+    #             str   location       -> 위반 발생 구역 이름 (인도주행 시 Zone 이름, 나머지는 "")
     # 반환값    : 없음
     def send_violation(self, violation_type: str, track_id: int, conf: float,
-                       image_path: str = ""):
+                       image_path: str = "", location: str = ""):
         # 로컬 파일 경로를 접근 가능한 URL 로 변환한다.
         image_url = ""
         if image_path:
@@ -71,6 +72,7 @@ class ConnectAPI:
             "image_url":  image_url,
             "camera":     config.CAMERA_ID,
             "confidence": int(conf * 100),
+            "location":   location if location else config.CAMERA_ID,
         }
 
         alert = {
@@ -79,6 +81,7 @@ class ConnectAPI:
             "track_id":   track_id,
             "confidence": payload["confidence"],
             "camera":     config.CAMERA_ID,
+            "location":   payload["location"],
         }
         self.alert_history.append(alert)
         print(alert)

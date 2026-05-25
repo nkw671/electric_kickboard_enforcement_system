@@ -18,9 +18,9 @@ class ViolationStrategy(ABC):
     # 파라미터  : list boxes    -> 전체 바운딩 박스 목록 [(x1,y1,x2,y2), ...]
     #             list labels   -> 각 박스에 대응하는 레이블 문자열 목록
     #             int  idx      -> 현재 탑승자 박스의 인덱스
-    # 반환값    : str | None -> 위반 유형 문자열 또는 None (위반 없음)
+    # 반환값    : tuple[str, str] | None -> (위반유형, location) 또는 None (위반 없음)
     @abstractmethod
-    def check(self, boxes: list, labels: list, idx: int) -> str | None:
+    def check(self, boxes: list, labels: list, idx: int) -> tuple | None:
         pass
 
 
@@ -36,8 +36,8 @@ class HelmetViolation(ViolationStrategy):
     # 파라미터  : list boxes -> 전체 바운딩 박스 목록
     #             list labels -> 각 박스에 대응하는 레이블 목록
     #             int  idx    -> 탑승자 박스의 인덱스
-    # 반환값    : str | None -> "헬멧 미착용" 또는 None
-    def check(self, boxes: list, labels: list, idx: int) -> str | None:
+    # 반환값    : tuple[str, str] | None -> ("헬멧 미착용", "") 또는 None
+    def check(self, boxes: list, labels: list, idx: int) -> tuple | None:
         rx1, ry1, rx2, ry2 = boxes[idx]
         for i, label in enumerate(labels):
             if label != self.HELMET_LABEL:
@@ -46,7 +46,7 @@ class HelmetViolation(ViolationStrategy):
             hcx = (hx1 + hx2) / 2
             hcy = (hy1 + hy2) / 2
             if rx1 <= hcx <= rx2 and ry1 <= hcy <= ry2:
-                return "헬멧 미착용"
+                return ("헬멧 미착용", "")
         return None
 
 
@@ -68,14 +68,14 @@ class SidewalkViolation(ViolationStrategy):
     # 파라미터  : list boxes -> 전체 바운딩 박스 목록
     #             list labels -> 각 박스에 대응하는 레이블 목록 (미사용)
     #             int  idx    -> 탑승자 박스의 인덱스
-    # 반환값    : str | None -> "인도주행" 또는 None
-    def check(self, boxes: list, labels: list, idx: int) -> str | None:
+    # 반환값    : tuple[str, str] | None -> ("인도 주행", zone이름) 또는 None
+    def check(self, boxes: list, labels: list, idx: int) -> tuple | None:
         x1, y1, x2, y2 = boxes[idx]
         cx, cy = int((x1 + x2) / 2), int(y2)
         for zone in self.zone_drawer.zones:
             poly = np.array(zone["pts"], dtype=np.int32)
             if cv2.pointPolygonTest(poly, (cx, cy), False) >= 0:
-                return "인도 주행"
+                return ("인도 주행", zone["name"])
         return None
 
 
@@ -91,10 +91,10 @@ class DoubleRidingViolation(ViolationStrategy):
     # 파라미터  : list boxes  -> 전체 바운딩 박스 목록 (미사용)
     #             list labels -> 각 박스에 대응하는 레이블 목록
     #             int  idx    -> 탑승자 박스의 인덱스
-    # 반환값    : str | None -> "다인탑승" 또는 None
-    def check(self, boxes: list, labels: list, idx: int) -> str | None:
+    # 반환값    : tuple[str, str] | None -> ("다인 탑승", "") 또는 None
+    def check(self, boxes: list, labels: list, idx: int) -> tuple | None:
         if labels[idx] == self.DOUBLE_LABEL:
-            return "다인 탑승"
+            return ("다인 탑승", "")
         return None
 
 
@@ -207,7 +207,7 @@ class DecideViolation:
               confs: list, ids: list):
 
         render_targets = []   # [(x1, y1, [v_type, ...]), ...]
-        pending_alerts = []   # [(tid, v_type, conf), ...] 렌더링 후 처리할 알림 목록
+        pending_alerts = []   # [(tid, v_type, location, conf), ...] 렌더링 후 처리할 알림 목록
 
         for i, label in enumerate(labels):
             if label not in self.RIDER_LABELS:
@@ -217,32 +217,33 @@ class DecideViolation:
             tid  = ids[i]
             conf = confs[i]
 
-            # 전략 목록을 순서대로 실행하여 위반 항목을 수집한다.
-            violations = [
+            # 전략 목록을 순서대로 실행하여 (위반유형, location) 튜플 목록을 수집한다.
+            results = [
                 result
                 for strategy in self.strategies
                 if (result := strategy.check(boxes, labels, i)) is not None
             ]
 
-            if violations:
-                render_targets.append((x1, y1, violations))
+            if results:
+                render_targets.append((x1, y1, [v for v, _ in results]))
 
-            for v_type in violations:
+            for v_type, location in results:
                 if self._should_alert(tid, v_type):
-                    pending_alerts.append((tid, v_type, conf))
-                    print(f"[VIOLATION] {v_type} | #{tid} | conf={conf:.2f}")
+                    pending_alerts.append((tid, v_type, location, conf))
+                    print(f"[VIOLATION] {v_type} | #{tid} | conf={conf:.2f} | location={location}")
 
         # 텍스트 렌더링을 먼저 수행하여 위반 텍스트가 포함된 프레임을 저장한다.
         self._draw_violations(frame, render_targets)
 
         # 렌더링이 완료된 프레임을 저장하고 콜백을 호출한다.
-        for tid, v_type, conf in pending_alerts:
+        for tid, v_type, location, conf in pending_alerts:
             saved_path = self._save_frame(frame, v_type, tid)
             self.on_violation(
                 violation_type = v_type,
                 track_id       = tid,
                 conf           = conf,
                 image_path     = saved_path,
+                location       = location,
             )
 
 
