@@ -138,3 +138,8 @@ CLAUDE.md
 /src/lowAngle_30fps.mp4
 /src/lowAngle_60fps.mp4
 /src/show_video.mp4
+/src/best.pt
+/src/best_sgd.pt
+/src/best_video.pt
+/src/final(not final).pt
+/src/best_v3.pt
