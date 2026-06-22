@@ -6,22 +6,20 @@ def main():
 
 
 
-    model = YOLO('../temp/yolo26n.pt')
+    model = YOLO("yolo26s.pt")  # 기존 학습 모델에서 파인튜닝
 
     model.train(
-        data=r'C:\Projects\Kickboard_project\AI\new_train\kickboard+helmet+background_v2-1\data.yaml',
-        epochs=200,
+        data=r'C:\Projects\Kickboard_project\AI\new_train\moreData\data.yaml',
+        epochs=100,
         imgsz=800,
         device=0,
         workers=0,
         optimizer='SGD',
-        lr0=0.001,
+        lr0=0.01,       # 파인튜닝은 낮은 학습률로 기존 가중치 보존
         weight_decay=0.001,
-        # 아래 인자들은 공식 문서에 명시된 하이퍼파라미터입니다.
-        cls=1.2,  # 분류(헬멧 유무)에 더 집중
-        dfl=2.0,  # 박스 경계 정교화 강화
-        box=8.5,  # 위치 예측 가중치 상향
-        cos_lr=True  # 학습률 부드럽게 감소
+        cls=1.2,
+        box=8.5,
+        cos_lr=True
     )
 
     # 경로 앞에 r을 붙여서 윈도우 역슬래시(\) 경로 오작동을 방지합니다.
