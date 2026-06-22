@@ -1,5 +1,6 @@
 import os
 import uvicorn
+import torch
 from threading import Thread
 from ultralytics import YOLO
 
@@ -11,8 +12,10 @@ from api import ConnectAPI
 
 
 if __name__ == "__main__":
+    torch.backends.cudnn.benchmark = True          # 고정 입력 크기에 CUDA 자동 최적화
     # YOLO 모델을 로드한다.
     model = YOLO(config.MODEL_PATH).to("cuda")
+    model.fuse()                                   # Conv+BN 레이어 융합으로 추론 속도 향상
     print(model.device)
     print("YOLO model loaded successfully!")
 

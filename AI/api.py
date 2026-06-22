@@ -1,6 +1,7 @@
 import asyncio
 import httpx
 import os
+import queue
 from datetime import datetime
 from threading import Thread
 from urllib.parse import quote
@@ -13,9 +14,9 @@ import config
 
 # 클래스명        : ConnectAPI
 # 기능           : API 통신 전담 — FastAPI 엔드포인트 등록 및 백엔드 위반 전송
-# 내장 함수 목록  : __init__()          - FastAPI 앱, CORS, 엔드포인트 등록
-#                  send_violation()    - 위반 정보를 별도 스레드로 백엔드에 전송 (논블로킹)
-#                  _post_violation()   - 백엔드 POST /api/violations 실제 전송 (스레드에서 호출)
+# 내장 함수 목록  : __init__()          - FastAPI 앱, CORS, 엔드포인트, 전송 워커 초기화
+#                  send_violation()    - 위반 정보를 전송 큐에 적재 (논블로킹)
+#                  _send_worker()      - 큐의 payload 를 단일 클라이언트로 순차 전송 (워커 스레드)
 #                  video_stream()      - latest_frame 을 MJPEG 형식으로 실시간 스트리밍
 #                  get_zones()         - 현재 설정된 Zone 목록 반환
 #                  set_zones()         - React 캔버스에서 그린 Zone 목록을 받아 저장
@@ -50,9 +51,14 @@ class ConnectAPI:
         self.app.delete("/zones")(self.delete_zones)
         self.app.get("/alerts")(self.get_alerts)
 
+        # 백엔드 전송 전용 단일 클라이언트와 워커 스레드 (커넥션 재사용 + 스레드 무한 생성 방지)
+        self._client = httpx.Client(timeout=3.0)
+        self._send_q = queue.Queue()
+        Thread(target=self._send_worker, daemon=True).start()
+
     # 함수 이름 : send_violation()
     # 기능      : 위반 정보를 alert_history 에 추가하고
-    #             백엔드 전송을 별도 스레드에서 실행하여 감지 루프를 블로킹하지 않는다.
+    #             백엔드 전송 payload 를 큐에 적재하여 감지 루프를 블로킹하지 않는다.
     # 파라미터  : str   violation_type -> 위반 유형
     #             int   track_id       -> 객체 추적 ID
     #             float conf           -> YOLO 감지 신뢰도 (0.0 ~ 1.0)
@@ -72,7 +78,7 @@ class ConnectAPI:
             "image_url":  image_url,
             "camera":     config.CAMERA_ID,
             "confidence": int(conf * 100),
-            "location":   location if location else config.CAMERA_ID,
+            "location":   location if location else "",
         }
 
         alert = {
@@ -86,20 +92,21 @@ class ConnectAPI:
         self.alert_history.append(alert)
         print(alert)
 
-        # 전송을 별도 스레드에서 실행하여 감지 루프를 블로킹하지 않는다.
-        Thread(target=self._post_violation, args=(payload,), daemon=True).start()
+        # 전송 payload 를 큐에 적재한다. (워커 스레드가 순차 전송)
+        self._send_q.put(payload)
 
-    # 함수 이름 : _post_violation()
-    # 기능      : 백엔드로 위반 정보를 전송한다.
-    #             send_violation() 에서 별도 스레드로 호출된다.
-    # 파라미터  : dict payload -> 전송할 위반 정보 딕셔너리
+    # 함수 이름 : _send_worker()
+    # 기능      : 전송 큐에서 payload 를 꺼내 단일 httpx.Client 로 백엔드에 순차 전송한다.
+    #             커넥션을 재사용하며 별도 워커 스레드에서 무한 루프로 실행된다.
+    # 파라미터  : 없음
     # 반환값    : 없음
-    def _post_violation(self, payload: dict):
-        try:
-            with httpx.Client() as client:
-                client.post(config.BACKEND_URL, json=payload, timeout=3.0)
-        except Exception as e:
-            print(f"[전송 실패] {payload.get('type')} | {e}")
+    def _send_worker(self):
+        while True:
+            payload = self._send_q.get()
+            try:
+                self._client.post(config.BACKEND_URL, json=payload)
+            except Exception as e:
+                print(f"[전송 실패] {payload.get('type')} | {e}")
 
     # 함수 이름 : video_stream()
     # 기능      : config.latest_frame 을 MJPEG 형식으로 실시간 스트리밍한다.

@@ -4,7 +4,7 @@ import numpy as np
 from abc import ABC, abstractmethod
 from datetime import datetime
 from PIL import Image, ImageDraw, ImageFont
-from config import COOLDOWN, VIOLATION_DIR
+from config import COOLDOWN, SUSTAIN, VIOLATION_DIR
 import os
 
 
@@ -119,6 +119,7 @@ class DecideViolation:
         self.strategies   = strategies
         self.on_violation = on_violation
         self._last_alert  = {}                    # {(track_id, violation_type): 마지막 알림 시각}
+        self._first_seen  = {}                    # {(track_id, violation_type): 연속 관측 시작 시각}
         self._font        = self._load_font(20)   # 한글 폰트를 한 번만 로드한다.
 
     # 함수 이름 : _load_font()
@@ -196,6 +197,7 @@ class DecideViolation:
     # 함수 이름 : check()
     # 기능      : 한 프레임의 YOLO 감지 결과에서 전략 목록을 순서대로 실행하여
     #             위반 항목을 종합 판정하고 콜백을 호출한다.
+    #             위반이 SUSTAIN 초 이상 연속 지속된 경우에만 단속으로 인정한다.
     #             새 위반 유형 추가 시 이 메서드를 수정하지 않아도 된다. (OCP)
     # 파라미터  : np.ndarray frame  -> 현재 처리 중인 영상 프레임
     #             list       boxes  -> 바운딩 박스 좌표 목록 [(x1,y1,x2,y2), ...]
@@ -208,6 +210,8 @@ class DecideViolation:
 
         render_targets = []   # [(x1, y1, [v_type, ...]), ...]
         pending_alerts = []   # [(tid, v_type, location, conf), ...] 렌더링 후 처리할 알림 목록
+        active_keys    = set()   # 이번 프레임에서 감지된 (track_id, 위반유형) 집합
+        now            = time.time()
 
         for i, label in enumerate(labels):
             if label not in self.RIDER_LABELS:
@@ -228,9 +232,22 @@ class DecideViolation:
                 render_targets.append((x1, y1, [v for v, _ in results]))
 
             for v_type, location in results:
+                key = (tid, v_type)
+                active_keys.add(key)
+                # 위반이 처음 관측된 시각을 기록한다 (연속 관측의 시작점).
+                self._first_seen.setdefault(key, now)
+
+                # SUSTAIN 초 이상 연속 지속된 위반만 단속으로 인정한다.
+                if now - self._first_seen[key] < SUSTAIN:
+                    continue
+
                 if self._should_alert(tid, v_type):
                     pending_alerts.append((tid, v_type, location, conf))
                     print(f"[VIOLATION] {v_type} | #{tid} | conf={conf:.2f} | location={location}")
+
+        # 이번 프레임에 없는 위반은 추적 정보를 삭제하여 지속 시간을 초기화한다.
+        for key in self._first_seen.keys() - active_keys:
+            del self._first_seen[key]
 
         # 텍스트 렌더링을 먼저 수행하여 위반 텍스트가 포함된 프레임을 저장한다.
         self._draw_violations(frame, render_targets)
