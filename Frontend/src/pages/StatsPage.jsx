@@ -1,6 +1,4 @@
 import { useMemo } from 'react'
-import { TYPE_COLOR } from '../constants'
-import { DUMMY_VIOLATIONS } from '../data/dummyData'
 import useApi from '../hooks/useApi'
 import styles from './StatsPage.module.css'
 import {
@@ -43,8 +41,8 @@ const TYPE_CONFIG = {
 
 
 function StatsPage() {
-  const { data: apiData, loading } = useApi('/api/violations?limit=9999')
-  const violations = (apiData && apiData.length > 0) ? apiData : DUMMY_VIOLATIONS
+  const { data: apiData, loading, error } = useApi('/api/violations?limit=9999')
+  const violations = useMemo(() => apiData || [], [apiData])
 
   const total = violations.length
 
@@ -77,7 +75,8 @@ function StatsPage() {
       .map(([location, count]) => ({ location, count }))
   }, [violations])
 
-if (loading) return <div className={styles.status}>불러오는 중...</div>
+  if (loading) return <div className={styles.status}>불러오는 중...</div>
+  if (error) return <div className={styles.statusError}>서버에 연결할 수 없습니다.</div>
 
   return (
     <div className={styles.page}>
