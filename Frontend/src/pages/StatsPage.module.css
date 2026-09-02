@@ -1,8 +1,8 @@
 .status {
   text-align: center;
   padding: 40px;
-  color: #64748b;
-  font-size: 16px;
+  color: var(--ink-500);
+  font-size: 15px;
 }
 
 .page {
@@ -10,239 +10,371 @@
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 0;
-}
-
-/* 헤더 */
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 24px;
-}
-
-.title {
-  font-size: 25px;
-  font-weight: 700;
-  color: #0f172a;
-  line-height: 1;
-}
-
-.countBadge {
-  display: inline-flex;
-  align-items: center;
-  background-color: transparent;
-  color: #94a3b8;
-  border: 2px solid #b8c5d4;
-  font-size: 14px;
-  font-weight: 600;
-  padding: 5px 11px;
-  border-radius: 10px;
-  line-height: 1;
-}
-
-/* 컨텐츠 */
-.content {
-  display: flex;
-  flex-direction: column;
   gap: 20px;
 }
 
-/* 요약 카드 4개 */
-.summaryRow {
+/* ── 상단 헤더 ── */
+.topbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.crumb {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-400);
+  margin-bottom: 6px;
+}
+
+.pageTitle {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--ink-900);
+  margin: 0;
+}
+
+/* ── 콘텐츠 영역 ── */
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── KPI 카드 ── */
+.kpiRow {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-}
-
-.summaryCard {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-}
-
-.summaryCardLabel {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 17px;
-  font-weight: 500;
-  color: #64748b;
-}
-
-.summaryIcon {
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-}
-
-.summaryCardLabel svg {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
-}
-
-.summaryVal {
-  font-size: 23px;
-  font-weight: 700;
-  color: #0f172a;
-  line-height: 1;
-  margin-top: 2px;
-}
-
-.summaryUnit {
-  font-size: 13px;
-  color: #64748b;
-}
-
-/* 차트 행 (3컬럼) */
-.chartRow3 {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-}
-
-.colSpan2 {
-  grid-column: span 2;
-}
-
-/* 차트 카드 공통 */
-.chartCard {
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
   gap: 12px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
-.chartCardHeader {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 15px;
-  font-weight: 600;
-  color: #374151;
+@media (max-width: 900px) {
+  .kpiRow { grid-template-columns: repeat(2, 1fr); }
 }
 
-.chartHeaderIcon {
-  width: 16px;
-  height: 16px;
-  color: #94a3b8;
-  flex-shrink: 0;
-}
-
-/* 파이차트 범례 */
-.pieLegend {
+.kpiCard {
+  background-color: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  padding: 18px 20px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-top: -6px;
-}
-
-.pieLegendRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 12px;
-}
-
-.pieLegendLeft {
-  display: flex;
-  align-items: center;
   gap: 6px;
 }
 
-.pieDot {
-  width: 10px;
-  height: 10px;
+.kpiNavy {
+  background-color: var(--navy);
+  border-color: var(--navy);
+}
+
+.kpiLabelRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.kpiLed {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
-.pieLegendName {
-  color: #64748b;
+.kpiLabelTxt {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-500);
+  white-space: nowrap;
 }
 
-.pieLegendVal {
+.kpiNavy .kpiLabelTxt {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.kpiVal {
+  font-family: var(--font-mono);
+  font-size: 36px;
   font-weight: 600;
-  color: #0f172a;
+  line-height: 1;
+  color: var(--ink-900);
+  font-variant-numeric: tabular-nums;
+  margin-top: 4px;
 }
 
-/* 위치 TOP5 */
-.locationList {
-  flex: 1;
+.kpiNavy .kpiVal {
+  color: #ffffff;
+}
+
+.kpiFooter {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.kpiPct {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-400);
+}
+
+.kpiDelta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-300);
+}
+
+.kpiNavy .kpiDelta {
+  color: rgba(255, 255, 255, 0.3);
+}
+
+/* ── 2열 차트 그리드 (도넛 + TOP5) ── */
+.chartRow {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .chartRow { grid-template-columns: 1fr; }
+}
+
+/* ── 차트 카드 공통 ── */
+.chartCard {
+  background-color: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  overflow: hidden;
+}
+
+.chartCardHeader {
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.chartCardTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-900);
+  line-height: 1.3;
+}
+
+.chartCardTitle small {
+  display: block;
+  margin-top: 3px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-400);
+}
+
+.chartLegend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-500);
+  white-space: nowrap;
+}
+
+.legendSq {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 1px;
+  flex-shrink: 0;
+}
+
+/* ── 도넛 섹션 ── */
+.donutSection {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 18px;
+}
+
+.donutWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.donutCenter {
+  position: absolute;
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  align-items: center;
   justify-content: center;
+  gap: 1px;
+  pointer-events: none;
 }
 
-.locationRow {
+.donutNum {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ink-900);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.donutSub {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--ink-400);
+}
+
+.donutLegend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+}
+
+.donutLegendItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.donutDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.donutLegendName {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-700);
+  white-space: nowrap;
+  flex: 1;
+}
+
+.donutLegendVal {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-400);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ── TOP 5 위치 ── */
+.top5Section {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px 18px;
+}
+
+.top5Row {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.locationRank {
-  font-size: 13px;
+.top5Rank {
+  font-family: var(--font-mono);
+  font-size: 18px;
   font-weight: 700;
-  color: #94a3b8;
-  width: 16px;
+  color: var(--ink-200);
+  width: 28px;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.top5Info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.top5Meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.top5Name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-700);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.top5Count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-400);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
   flex-shrink: 0;
 }
 
-.locationInfo {
-  flex: 1;
-}
-
-.locationMeta {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  margin-bottom: 2px;
-}
-
-.locationName {
-  font-weight: 500;
-  color: #0f172a;
-}
-
-.locationCount {
-  color: #64748b;
-}
-
-.locationBarTrack {
-  height: 6px;
-  border-radius: 9999px;
-  background-color: #f1f5f9;
+.top5Track {
+  height: 4px;
+  background-color: var(--ink-100);
+  border-radius: 2px;
   overflow: hidden;
 }
 
-.locationBar {
+.top5Bar {
   height: 100%;
-  border-radius: 9999px;
-  background-color: #0ea5e9;
-  transition: width 0.6s ease;
+  background-color: var(--navy);
+  border-radius: 2px;
+  transition: width 0.4s ease;
 }
 
-@media (max-width: 768px) {
-  .summaryRow {
-    grid-template-columns: repeat(2, 1fr);
-  }
+/* ── 시간대별 차트 패딩 ── */
+.barChartWrap {
+  padding: 14px 4px 12px 0;
+}
 
-  .chartRow3 {
-    grid-template-columns: 1fr;
-  }
+/* ── 빈 상태 ── */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 40px;
+  color: var(--ink-300);
+  font-size: 14px;
+}
 
-  .colSpan2 {
-    grid-column: span 1;
-  }
+.emptyState svg {
+  width: 24px;
+  height: 24px;
 }
