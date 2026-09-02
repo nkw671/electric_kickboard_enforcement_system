@@ -1,57 +1,16 @@
-:root {
-  /* surface */
-  --ink-900: #0a0f1a;
-  --ink-700: #1f2937;
-  --ink-500: #56607a;
-  --ink-400: #7a849a;
-  --ink-300: #a8b0c2;
-  --ink-200: #d6d9e1;
-  --ink-100: #ebedf2;
-  --ink-50:  #f4f5f8;
-
-  --paper:   #f6f4ef;
-  --paper-2: #efece4;
-  --surface: #ffffff;
-  --line:    #e4e1d8;
-  --dark:    #0e1217;
-  --dark-2:  #161b22;
-  --dark-line: #252d38;
-
-  --navy:    #0a2540;
-
-  /* semantic */
-  --accent-blue:  #2563eb;
-  --accent-amber: #d97706;
-  --accent-rose:  #db2777;
-  --accent-green: #16a34a;
-  --accent-red:   #dc2626;
-
-  /* soft chips */
-  --chip-blue-bg:  #e6efff; --chip-blue-tx:  #1e4cb8;
-  --chip-amber-bg: #fcf1dc; --chip-amber-tx: #9a5c08;
-  --chip-rose-bg:  #fde6ee; --chip-rose-tx:  #a31a59;
-
-  /* type */
-  --font-ui: "Pretendard", "Pretendard Variable", system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
-
-  /* radius */
-  --r-chip: 2px;
-  --r-card: 4px;
-  --r-panel: 6px;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
-
-* { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  font-family: var(--font-ui);
-  background-color: var(--paper);
-  color: var(--ink-900);
+  font-family: 'Malgun Gothic', '맑은 고딕', 'Segoe UI', sans-serif;
+  background-color: #eef1f6;
+  color: #1a2744;
   -webkit-font-smoothing: antialiased;
-  font-feature-settings: "ss01", "ss02";
 }
 
-.mono, code, time,
-[data-numeric] { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
-
-#root { min-height: 100vh; }
+#root {
+  min-height: 100vh;
+}

@@ -6,163 +6,68 @@
   gap: 20px;
 }
 
-/* ── 상단 헤더 ── */
-.topbar {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  padding-bottom: 20px;
-  border-bottom: 1px solid var(--line);
-}
-
-.crumb {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ink-400);
-  margin-bottom: 6px;
-}
-
-.pageTitle {
-  font-size: 26px;
+.title {
+  font-size: 24px;
   font-weight: 700;
-  color: var(--ink-900);
+  color: #0f172a;
   margin: 0;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e2e8f0;
 }
 
-/* ── 레이아웃 ── */
 .layout {
   display: grid;
-  grid-template-columns: 1fr 260px;
+  grid-template-columns: 1fr 280px;
   gap: 20px;
   align-items: start;
 }
 
-@media (max-width: 900px) {
-  .layout { grid-template-columns: 1fr; }
-}
-
-/* ── 캔버스 래퍼 ── */
+/* 캔버스 */
 .canvasWrap {
-  background-color: var(--dark);
-  border: 1px solid var(--dark-line);
-  border-radius: var(--r-panel);
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
   overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
 }
 
-/* ── 캔버스 헤더 (다크) ── */
 .canvasHeader {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background-color: var(--dark-2);
-  border-bottom: 1px solid var(--dark-line);
-  gap: 12px;
-}
-
-.canvasHeaderLeft {
-  display: flex;
-  align-items: center;
   gap: 8px;
-}
-
-.canvasHeaderRight {
-  display: flex;
-  align-items: center;
+  padding: 12px 16px;
+  background-color: #111827;
+  font-size: 13px;
+  color: #9ca3af;
 }
 
 .connDot {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
-.connOn  { background-color: var(--accent-green); }
-.connOff { background-color: var(--ink-400); }
+.connOn  { background-color: #22c55e; }
+.connOff { background-color: #6b7280; }
 
-.connLabel {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.45);
-}
+.connLabel { font-size: 13px; color: #d1d5db; }
 
 .drawingBadge {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  color: var(--accent-amber);
-  border: 1px solid rgba(217, 119, 6, 0.35);
-  padding: 3px 8px;
-  border-radius: var(--r-chip);
-}
-
-.drawingDot {
-  display: inline-block;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background-color: var(--accent-amber);
-  animation: blink 1s infinite;
-  flex-shrink: 0;
-}
-
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50%       { opacity: 0.2; }
-}
-
-.camChip {
-  font-family: var(--font-mono);
+  margin-left: auto;
+  background-color: #f59e0b;
+  color: #000000;
   font-size: 12px;
   font-weight: 600;
-  color: #e2e8f0;
-  background-color: #1a2233;
-  border: 1px solid var(--dark-line);
   padding: 3px 10px;
-  border-radius: var(--r-chip);
+  border-radius: 6px;
 }
 
-.kbHints {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.kbHint {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.35);
-}
-
-.kbd {
-  display: inline-block;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.6);
-  background-color: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 3px;
-  padding: 1px 5px;
-  line-height: 1.4;
-}
-
-/* ── 캔버스 스테이지 ── */
 .canvasStage {
   position: relative;
   width: 100%;
   aspect-ratio: 16 / 9;
-  background-color: #0d1520;
+  background-color: #1e293b;
 }
 
 .canvasVideo {
@@ -181,22 +86,14 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  color: var(--ink-400);
-  font-size: 14px;
-}
-
-.canvasPlaceholder svg {
-  width: 28px;
-  height: 28px;
-  opacity: 0.4;
+  gap: 6px;
+  color: #94a3b8;
+  font-size: 16px;
 }
 
 .canvasPlaceholder small {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--ink-400);
-  opacity: 0.6;
+  font-size: 13px;
+  color: #64748b;
 }
 
 .canvas {
@@ -211,156 +108,70 @@
   cursor: crosshair;
 }
 
-/* ── 좌표 오버레이 ── */
-.coordOverlay {
-  position: absolute;
-  top: 12px;
-  left: 12px;
+.canvasFooter {
   display: flex;
+  align-items: center;
   gap: 10px;
-  align-items: center;
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(4px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 5px 10px;
-  border-radius: var(--r-chip);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  color: rgba(255, 255, 255, 0.55);
-  pointer-events: none;
-  z-index: 5;
+  padding: 12px 16px;
+  border-top: 1px solid #e2e8f0;
+  background-color: #f8fafc;
 }
 
-.coordOverlay b {
-  color: #ffffff;
-  font-weight: 600;
+.hint {
+  margin-left: auto;
+  font-size: 12px;
+  color: #94a3b8;
 }
 
-.coordSep {
-  color: rgba(255, 255, 255, 0.25);
-}
-
-/* ── 인캔버스 툴바 ── */
-.canvasToolbar {
-  position: absolute;
-  bottom: 14px;
-  left: 14px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.toolbarBtnStart,
-.toolbarBtnDone,
-.toolbarBtnCancel {
+/* 버튼 */
+.btnPrimary, .btnSuccess, .btnGhost, .btnSave, .btnDelete {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 14px;
-  border-radius: var(--r-card);
+  padding: 7px 16px;
+  border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
-  transition: all 0.12s;
+  transition: all 0.15s;
   border: none;
-  backdrop-filter: blur(6px);
 }
 
-.toolbarBtnStart svg,
-.toolbarBtnDone svg,
-.toolbarBtnCancel svg {
-  width: 13px;
-  height: 13px;
-  flex-shrink: 0;
-}
-
-.toolbarBtnStart {
-  background-color: var(--navy);
+.btnPrimary {
+  background-color: #0f172a;
   color: #ffffff;
 }
 
-.toolbarBtnStart:hover {
-  background-color: #0d3060;
+.btnPrimary svg {
+  width: 14px;
+  height: 14px;
 }
 
-.toolbarBtnDone {
-  background-color: var(--accent-green);
+.btnPrimary:hover { background-color: #1e293b; }
+
+.btnSuccess {
+  background-color: #16a34a;
   color: #ffffff;
 }
 
-.toolbarBtnDone:hover:not(:disabled) {
-  background-color: #15803d;
+.btnSuccess:hover:not(:disabled) { background-color: #15803d; }
+.btnSuccess:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btnGhost {
+  background-color: #ffffff;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
 }
 
-.toolbarBtnDone:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
+.btnGhost:hover { background-color: #f1f5f9; }
 
-.toolbarBtnCancel {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-.toolbarBtnCancel:hover {
-  background-color: rgba(255, 255, 255, 0.18);
-  color: #ffffff;
-}
-
-.toolbarHint {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.3);
-  margin-left: 4px;
-}
-
-/* ── 그리기 시작 버튼 (패널 상단) ── */
-.btnDrawStart {
-  width: 100%;
-  padding: 12px 16px;
-  background-color: var(--navy);
-  color: #ffffff;
-  border: none;
-  border-radius: var(--r-card);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background-color 0.12s;
-  margin-bottom: 12px;
-  flex-shrink: 0;
-}
-
-.btnDrawStart svg {
-  width: 15px;
-  height: 15px;
-  flex-shrink: 0;
-}
-
-.btnDrawStart:hover:not(:disabled) {
-  background-color: #0d3060;
-}
-
-.btnDrawStart:disabled {
-  background-color: var(--ink-100);
-  border: 1px solid var(--line);
-  color: var(--ink-400);
-  cursor: not-allowed;
-}
-
-/* ── 사이드 패널 ── */
+/* 사이드 패널 */
 .panel {
-  background-color: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-panel);
-  overflow: hidden;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
 }
@@ -370,198 +181,122 @@
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px;
-  border-bottom: 1px solid var(--line);
-  background-color: var(--paper-2);
-}
-
-.panelTitleRow {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-
-.panelIcon {
-  width: 14px;
-  height: 14px;
-  color: var(--navy);
-  flex-shrink: 0;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .panelTitle {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
-  color: var(--ink-700);
+  color: #374151;
 }
 
 .zoneCnt {
-  font-family: var(--font-mono);
   font-size: 13px;
   font-weight: 600;
-  color: var(--ink-400);
-  font-variant-numeric: tabular-nums;
+  color: #94a3b8;
 }
 
-/* ── 존 목록 ── */
 .zoneList {
   flex: 1;
   display: flex;
   flex-direction: column;
+  padding: 8px;
+  gap: 4px;
   min-height: 120px;
 }
 
 .emptyZone {
   flex: 1;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
   font-size: 13px;
-  color: var(--ink-300);
-  padding: 32px 16px;
+  color: #94a3b8;
+  padding: 24px;
   text-align: center;
-}
-
-.emptyZone svg {
-  width: 20px;
-  height: 20px;
-  opacity: 0.5;
 }
 
 .zoneItem {
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--line);
-  transition: background-color 0.1s;
-}
-
-.zoneItem:last-child {
-  border-bottom: none;
-}
-
-.zoneItem:hover {
-  background-color: var(--ink-50);
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
 }
 
 .zoneDot {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
 .zoneName {
   flex: 1;
-  font-family: var(--font-mono);
   font-size: 13px;
-  font-weight: 600;
-  color: var(--ink-700);
+  font-weight: 500;
+  color: #0f172a;
 }
 
 .zonePts {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--ink-300);
-  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  color: #94a3b8;
 }
 
 .zoneDeleteBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
   background: none;
   border: none;
-  color: var(--ink-300);
+  color: #94a3b8;
   cursor: pointer;
-  border-radius: var(--r-chip);
-  transition: color 0.12s, background-color 0.12s;
-  flex-shrink: 0;
-}
-
-.zoneDeleteBtn svg {
-  width: 13px;
-  height: 13px;
+  font-size: 12px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: all 0.15s;
 }
 
 .zoneDeleteBtn:hover {
   background-color: #fee2e2;
-  color: var(--accent-red);
+  color: #dc2626;
 }
 
-/* ── 패널 푸터 ── */
 .panelFooter {
   padding: 12px;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid #e2e8f0;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
 .statusMsg {
-  font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 500;
   padding: 6px 10px;
-  border-radius: var(--r-card);
+  border-radius: 6px;
   text-align: center;
 }
 
-.statusOk  { background-color: #dcfce7; color: var(--accent-green); }
-.statusErr { background-color: #fee2e2; color: var(--accent-red); }
-
-.btnSave,
-.btnDeleteAll {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  padding: 8px 14px;
-  border-radius: var(--r-card);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: inherit;
-  transition: all 0.12s;
-}
-
-.btnSave svg,
-.btnDeleteAll svg {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
-}
+.statusOk  { background-color: #dcfce7; color: #16a34a; }
+.statusErr { background-color: #fee2e2; color: #dc2626; }
 
 .btnSave {
-  background-color: var(--navy);
+  width: 100%;
+  justify-content: center;
+  background-color: #2563eb;
   color: #ffffff;
-  border: none;
 }
 
-.btnSave:hover:not(:disabled) {
-  background-color: #0d3060;
-}
+.btnSave:hover:not(:disabled) { background-color: #1d4ed8; }
+.btnSave:disabled { opacity: 0.4; cursor: not-allowed; }
 
-.btnSave:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.btnDeleteAll {
-  background-color: var(--surface);
-  color: var(--accent-red);
+.btnDelete {
+  width: 100%;
+  justify-content: center;
+  background-color: #ffffff;
+  color: #dc2626;
   border: 1px solid #fca5a5;
 }
 
-.btnDeleteAll:hover:not(:disabled) {
-  background-color: #fee2e2;
-}
-
-.btnDeleteAll:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
+.btnDelete:hover:not(:disabled) { background-color: #fee2e2; }
+.btnDelete:disabled { opacity: 0.4; cursor: not-allowed; }
