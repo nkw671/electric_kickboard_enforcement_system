@@ -1,13 +1,16 @@
 import { useState, useRef, useEffect } from 'react'
 import { TYPE_COLOR, FEED_MAX_COUNT } from '../constants'
-import { extractTime } from '../utils'
+import { extractTime, getTodayDateString } from '../utils'
 import useApi from '../hooks/useApi'
 import useSSE from '../hooks/useSSE'
 import styles from './MainPage.module.css'
 
 function MainPage() {
   const { data: violations, loading, error, connected } = useApi('/api/violations?limit=10')
-  const { data: stats } = useApi('/api/stats')
+  // "오늘 총 위반"이라는 라벨과 맞도록 오늘 날짜로 범위를 지정한다.
+  // 지정하지 않으면 백엔드가 전체 누적 통계를 반환한다.
+  const today = getTodayDateString()
+  const { data: stats } = useApi(`/api/stats?startDate=${today}&endDate=${today}`)
 
   const [toast, setToast] = useState(null)
   const toastTimerRef = useRef(null)

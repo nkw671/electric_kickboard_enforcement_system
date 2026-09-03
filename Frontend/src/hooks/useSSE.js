@@ -2,7 +2,10 @@ import { useEffect, useRef } from 'react'
 
 function useSSE(url, onViolation) {
   const callbackRef = useRef(onViolation)
-  callbackRef.current = onViolation
+
+  useEffect(() => {
+    callbackRef.current = onViolation
+  })
 
   useEffect(() => {
     const es = new EventSource(url)
