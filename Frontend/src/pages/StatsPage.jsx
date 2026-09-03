@@ -63,18 +63,6 @@ function StatsPage() {
     return Object.values(buckets).sort((a, b) => a.time.localeCompare(b.time))
   }, [violations])
 
-  const locationData = useMemo(() => {
-    const counts = {}
-    violations.forEach(v => {
-      const key = v.location || v.camera
-      counts[key] = (counts[key] || 0) + 1
-    })
-    return Object.entries(counts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5)
-      .map(([location, count]) => ({ location, count }))
-  }, [violations])
-
   if (loading) return <div className={styles.status}>불러오는 중...</div>
   if (error) return <div className={styles.statusError}>서버에 연결할 수 없습니다.</div>
 
@@ -115,68 +103,37 @@ function StatsPage() {
           })}
         </div>
 
-        {/* 차트 행 1: 파이차트 + 주요 단속 위치 TOP5 */}
-        <div className={styles.chartRow3}>
-          <div className={styles.chartCard}>
-            <div className={styles.chartCardHeader}>
-              <svg className={styles.chartHeaderIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-              </svg>
-              위반 유형 분포
-            </div>
-            <ResponsiveContainer width="100%" height={110} style={{ marginTop: '-8px' }}>
-              <PieChart>
-                <Pie data={typeData} cx="50%" cy="50%" innerRadius={34} outerRadius={55} paddingAngle={3} dataKey="value">
-                  {typeData.map(({ name }) => (
-                    <Cell key={name} fill={TYPE_CONFIG[name].color} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(v) => [`${v}건`, '단속 건수']} />
-              </PieChart>
-            </ResponsiveContainer>
-            <div className={styles.pieLegend}>
-              {typeData.map(({ name, value }) => {
-                const pct = total ? Math.round((value / total) * 100) : 0
-                return (
-                  <div key={name} className={styles.pieLegendRow}>
-                    <div className={styles.pieLegendLeft}>
-                      <span className={styles.pieDot} style={{ backgroundColor: TYPE_CONFIG[name].color }} />
-                      <span className={styles.pieLegendName}>{name}</span>
-                    </div>
-                    <span className={styles.pieLegendVal}>{value}건 ({pct}%)</span>
-                  </div>
-                )
-              })}
-            </div>
+        {/* 위반 유형 분포 */}
+        <div className={styles.chartCard}>
+          <div className={styles.chartCardHeader}>
+            <svg className={styles.chartHeaderIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+            </svg>
+            위반 유형 분포
           </div>
-
-          <div className={`${styles.chartCard} ${styles.colSpan2}`}>
-            <div className={styles.chartCardHeader}>
-              <svg className={styles.chartHeaderIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                <circle cx="12" cy="10" r="3"/>
-              </svg>
-              주요 단속 위치 TOP 5
-            </div>
-            <div className={styles.locationList}>
-              {locationData.map(({ location, count }, i) => {
-                const pct = total ? Math.round((count / total) * 100) : 0
-                return (
-                  <div key={location} className={styles.locationRow}>
-                    <span className={styles.locationRank}>{i + 1}</span>
-                    <div className={styles.locationInfo}>
-                      <div className={styles.locationMeta}>
-                        <span className={styles.locationName}>{location}</span>
-                        <span className={styles.locationCount}>{count}건</span>
-                      </div>
-                      <div className={styles.locationBarTrack}>
-                        <div className={styles.locationBar} style={{ width: `${pct}%` }} />
-                      </div>
-                    </div>
+          <ResponsiveContainer width="100%" height={110} style={{ marginTop: '-8px' }}>
+            <PieChart>
+              <Pie data={typeData} cx="50%" cy="50%" innerRadius={34} outerRadius={55} paddingAngle={3} dataKey="value">
+                {typeData.map(({ name }) => (
+                  <Cell key={name} fill={TYPE_CONFIG[name].color} />
+                ))}
+              </Pie>
+              <Tooltip formatter={(v) => [`${v}건`, '단속 건수']} />
+            </PieChart>
+          </ResponsiveContainer>
+          <div className={styles.pieLegend}>
+            {typeData.map(({ name, value }) => {
+              const pct = total ? Math.round((value / total) * 100) : 0
+              return (
+                <div key={name} className={styles.pieLegendRow}>
+                  <div className={styles.pieLegendLeft}>
+                    <span className={styles.pieDot} style={{ backgroundColor: TYPE_CONFIG[name].color }} />
+                    <span className={styles.pieLegendName}>{name}</span>
                   </div>
-                )
-              })}
-            </div>
+                  <span className={styles.pieLegendVal}>{value}건 ({pct}%)</span>
+                </div>
+              )
+            })}
           </div>
         </div>
 

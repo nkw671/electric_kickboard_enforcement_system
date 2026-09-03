@@ -236,35 +236,8 @@
   border-radius: 12px;
 }
 
-/* 미니 통계 2x2 그리드 */
-.miniStats {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  padding: 16px;
-  background-color: #ffffff;
-}
-
-.miniStat {
-  background-color: #f1f5f9;
-  border-radius: 10px;
-  padding: 20px 16px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.miniVal {
-  font-size: 32px;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.miniLbl {
-  font-size: 13px;
-  color: #475569;
-  font-weight: 500;
+.statusBadgeWarn {
+  background-color: #d97706;
 }
 
 /* 실시간 피드 */

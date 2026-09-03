@@ -1,16 +1,12 @@
 import { useState, useRef, useEffect } from 'react'
 import { TYPE_COLOR, FEED_MAX_COUNT } from '../constants'
-import { extractTime, getTodayDateString } from '../utils'
+import { extractTime } from '../utils'
 import useApi from '../hooks/useApi'
 import useSSE from '../hooks/useSSE'
 import styles from './MainPage.module.css'
 
 function MainPage() {
   const { data: violations, loading, error, connected } = useApi('/api/violations?limit=10')
-  // "오늘 총 위반"이라는 라벨과 맞도록 오늘 날짜로 범위를 지정한다.
-  // 지정하지 않으면 백엔드가 전체 누적 통계를 반환한다.
-  const today = getTodayDateString()
-  const { data: stats } = useApi(`/api/stats?startDate=${today}&endDate=${today}`)
 
   const [toast, setToast] = useState(null)
   const toastTimerRef = useRef(null)
@@ -47,8 +43,11 @@ function MainPage() {
     toastTimerRef.current = setTimeout(() => setToast(null), 4000)
   })
 
-  if (loading || !stats) return <div className={styles.status}>불러오는 중...</div>
   if (error) return <div className={styles.statusError}>서버에 연결할 수 없습니다.</div>
+  if (loading) return <div className={styles.status}>불러오는 중...</div>
+
+  // Backend(위반 목록 폴링)와 AI 영상 스트림이 둘 다 정상일 때만 "정상 작동"으로 표시한다.
+  const systemOk = connected && !streamError
 
   return (
     <div className={styles.page}>
@@ -68,7 +67,7 @@ function MainPage() {
         </div>
       )}
 
-      <h2 className={styles.pageTitle}>실시간 단속 모니터링</h2>
+      <h2 className={styles.pageTitle}>실시간 위반 감지 모니터링</h2>
       <div className={styles.contentGrid}>
         {/* 영상 스트림 */}
         <div className={styles.streamBox}>
@@ -80,16 +79,16 @@ function MainPage() {
               </svg>
               <div className={styles.streamInfo}>
                 <div className={styles.streamCamName}>CAM-01</div>
-                <div className={styles.streamCamSub}>실시간 단속 카메라</div>
+                <div className={styles.streamCamSub}>단속 카메라 영상</div>
               </div>
             </div>
             <div className={styles.streamBadges}>
               {connected && (
                 <span className={styles.recordBadge}>
-                  <span className={styles.recordDot} /> 녹화 중
+                  <span className={styles.recordDot} /> 수신 중
                 </span>
               )}
-              <span className={styles.liveBadge}>실시간</span>
+              <span className={styles.liveBadge}>실시간 분석 중</span>
             </div>
           </div>
           <div className={styles.streamBody}>
@@ -123,25 +122,9 @@ function MainPage() {
                 </svg>
                 <span className={styles.sideCardTitle}>시스템 상태</span>
               </div>
-              <span className={styles.statusBadge}>정상 작동</span>
-            </div>
-            <div className={styles.miniStats}>
-              <div className={styles.miniStat}>
-                <span className={styles.miniVal} style={{ color: '#002855' }}>{stats.total}</span>
-                <span className={styles.miniLbl}>오늘 총 위반</span>
-              </div>
-              <div className={styles.miniStat}>
-                <span className={styles.miniVal} style={{ color: '#2563eb' }}>{stats.helmet}</span>
-                <span className={styles.miniLbl}>헬멧 미착용</span>
-              </div>
-              <div className={styles.miniStat}>
-                <span className={styles.miniVal} style={{ color: '#2563eb' }}>{stats.sidewalk}</span>
-                <span className={styles.miniLbl}>인도 주행</span>
-              </div>
-              <div className={styles.miniStat}>
-                <span className={styles.miniVal} style={{ color: '#2563eb' }}>{stats.multiRider}</span>
-                <span className={styles.miniLbl}>다인 탑승</span>
-              </div>
+              <span className={`${styles.statusBadge} ${systemOk ? '' : styles.statusBadgeWarn}`}>
+                {systemOk ? '정상 작동' : '연결 확인 필요'}
+              </span>
             </div>
           </div>
 
