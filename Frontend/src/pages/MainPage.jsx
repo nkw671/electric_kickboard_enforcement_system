@@ -37,7 +37,7 @@ function MainPage() {
     return () => clearInterval(id)
   }, [])
 
-  useSSE('/api/stream', (violation) => {
+  const { connected: sseConnected } = useSSE('/api/stream', (violation) => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
     setToast(violation)
     toastTimerRef.current = setTimeout(() => setToast(null), 4000)
@@ -46,8 +46,8 @@ function MainPage() {
   if (error) return <div className={styles.statusError}>서버에 연결할 수 없습니다.</div>
   if (loading) return <div className={styles.status}>불러오는 중...</div>
 
-  // Backend(위반 목록 폴링)와 AI 영상 스트림이 둘 다 정상일 때만 "정상 작동"으로 표시한다.
-  const systemOk = connected && !streamError
+  // Backend(위반 목록 폴링), AI 영상 스트림, 실시간 알림(SSE) 셋 다 정상일 때만 "정상 작동"으로 표시한다.
+  const systemOk = connected && !streamError && sseConnected
 
   return (
     <div className={styles.page}>
@@ -132,6 +132,9 @@ function MainPage() {
           <div className={styles.sideCard}>
             <div className={styles.sideCardHeader}>
               <span className={styles.sideCardTitle}>실시간 위반 알림</span>
+              {!sseConnected && (
+                <span className={`${styles.statusBadge} ${styles.statusBadgeWarn}`}>재연결 중</span>
+              )}
             </div>
             <ul className={styles.feedList}>
               {violations.slice(0, FEED_MAX_COUNT).map((v) => (
