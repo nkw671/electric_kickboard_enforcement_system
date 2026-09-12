@@ -13,11 +13,35 @@ function MainPage() {
   const [currentTime, setCurrentTime] = useState('')
   const [streamError, setStreamError] = useState(false)
   const [streamKey, setStreamKey] = useState(0)
+  const streamAttemptRef = useRef(0)
+  const streamRetryTimerRef = useRef(null)
 
+  // 수동 재연결: 즉시 다시 시도하고 백오프 카운트를 리셋한다.
   const retryStream = () => {
+    clearTimeout(streamRetryTimerRef.current)
+    streamAttemptRef.current = 0
     setStreamError(false)
     setStreamKey(k => k + 1)
   }
+
+  // 스트림이 끊기면 지수 백오프(1s -> 2s -> ... 최대 30s)로 자동 재연결한다.
+  const handleStreamError = () => {
+    setStreamError(true)
+    const delay = Math.min(1000 * 2 ** streamAttemptRef.current, 30000)
+    streamAttemptRef.current += 1
+    streamRetryTimerRef.current = setTimeout(() => {
+      setStreamError(false)
+      setStreamKey(k => k + 1)
+    }, delay)
+  }
+
+  const handleStreamLoad = () => {
+    streamAttemptRef.current = 0
+  }
+
+  useEffect(() => {
+    return () => clearTimeout(streamRetryTimerRef.current)
+  }, [])
 
   useEffect(() => {
     const tick = () => {
@@ -97,12 +121,13 @@ function MainPage() {
                 src={`/ai/video/stream?t=${streamKey}`}
                 className={styles.stream}
                 alt="stream"
-                onError={() => setStreamError(true)}
+                onError={handleStreamError}
+                onLoad={handleStreamLoad}
               />
             ) : (
               <button className={styles.streamPlaceholder} onClick={retryStream}>
                 영상 스트림 영역<br />
-                <small>AI 서버 연결 후 활성화 · 클릭하여 재연결</small>
+                <small>AI 서버 연결 후 활성화 · 자동 재연결 중 · 클릭하여 즉시 재연결</small>
               </button>
             )}
             {currentTime && (
