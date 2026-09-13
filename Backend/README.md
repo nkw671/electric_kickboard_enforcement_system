@@ -60,7 +60,8 @@ src/main/java/com/kickboard/back/
 │
 ├── dto/                          # AI, 프론트와 주고받는 데이터 전송 객체
 │   ├── ViolationCreateRequest.java   # AI -> Back 수신용 DTO (유효성 검사 포함)
-│   └── ViolationResponse.java        # Back -> Front 송신용 DTO
+│   ├── ViolationResponse.java        # Back -> Front 송신용 DTO
+│   └── DashboardStatsResponse.java   # 대시보드 다차원 통계 응답용 DTO
 │
 └── exception/                    # 전역 예외 처리기
     └── GlobalExceptionHandler.java
@@ -146,9 +147,9 @@ AI 서버에서 감지한 위반 데이터를 DB에 저장하고, 연결된 프�
     ]
     ```
 
-### 3\. 실시간 통계 조회 (Back -\> Front)
+### 3\. 실시간 대시보드 통계 조회 (Back -\> Front)
 
-프론트엔드 통계 카드에 표시될 위반 건수를 반환합니다. 필터 파라미터가 없을 경우 전체 누적 통계를, 파라미터가 입력될 경우 해당 기간/구역 내의 통계를 계산하여 반환합니다.
+프론트엔드 대시보드에 표시될 다차원 통계 데이터를 단일 쿼리로 최적화하여 반환합니다. 필터 조건에 맞춰 전체 누적 건수, 시간대별 발생 추이, 위반 다발 구역(TOP 5)을 한 번에 제공합니다.
 
   * **URL:** `GET /api/stats`
   * **Query Parameter:**
@@ -159,10 +160,32 @@ AI 서버에서 감지한 위반 데이터를 DB에 저장하고, 연결된 프�
   * **Response:**
     ```json
     {
-      "total": 12,
-      "helmet": 7,
-      "sidewalk": 3,
-      "multiRider": 2
+      "overall": {
+        "total": 12,
+        "helmet": 7,
+        "sidewalk": 3,
+        "multiRider": 2
+      },
+      "hourly": [
+        {
+          "hour": 14,
+          "count": 5
+        },
+        {
+          "hour": 15,
+          "count": 7
+        }
+      ],
+      "topLocations": [
+        {
+          "location": "Zone-1",
+          "count": 8
+        },
+        {
+          "location": "Zone-2",
+          "count": 4
+        }
+      ]
     }
     ```
 

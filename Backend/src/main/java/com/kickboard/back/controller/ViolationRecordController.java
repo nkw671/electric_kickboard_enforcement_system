@@ -1,5 +1,6 @@
 package com.kickboard.back.controller;
 
+import com.kickboard.back.dto.DashboardStatsResponse;
 import com.kickboard.back.dto.ViolationCreateRequest;
 import com.kickboard.back.dto.ViolationResponse;
 import com.kickboard.back.service.ViolationRecordService;
@@ -11,7 +12,6 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import jakarta.validation.Valid;
 
 // AI 데이터 수신(POST) 및 프론트엔드 데이터 제공(GET)을 담당하는 API 엔드포인트 클래스
@@ -42,9 +42,8 @@ public class ViolationRecordController {
     }
 
     // 프론트엔드 대시보드용 위반 통계 데이터 제공 (GET /api/stats)
-    // 기간(startDate~endDate) 및 구역(camera) 조건에 따른 통계를 반환합니다.
     @GetMapping("/stats")
-    public Map<String, Integer> getStats(
+    public DashboardStatsResponse getStats(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(required = false) String camera

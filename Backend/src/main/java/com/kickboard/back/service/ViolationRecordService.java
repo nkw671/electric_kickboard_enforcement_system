@@ -1,9 +1,13 @@
 package com.kickboard.back.service;
 
+import com.kickboard.back.dto.DashboardStatsResponse;
 import com.kickboard.back.dto.ViolationCreateRequest;
 import com.kickboard.back.dto.ViolationResponse;
 import com.kickboard.back.entity.ViolationRecord;
 import com.kickboard.back.repository.ViolationRecordRepository;
+import com.kickboard.back.repository.ViolationRecordRepository.HourlyStatProjection;
+import com.kickboard.back.repository.ViolationRecordRepository.LocationStatProjection;
+import com.kickboard.back.repository.ViolationRecordRepository.OverallStatProjection;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -15,8 +19,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
@@ -110,54 +112,41 @@ public class ViolationRecordService {
     }
 
     // ==========================================
-    // 대시보드 통계 산출 (필터링 적용)
+    // 대시보드 통계 산출 (단일 쿼리 및 다차원 집계로 최적화)
     // ==========================================
 
-    // 기간별 및 구역별 누적 통계 산출
-    public Map<String, Integer> getStats(LocalDate startDate, LocalDate endDate, String camera) {
-        long total, helmet, sidewalk, multiRider;
+    // 기간별 및 구역별 누적 통계 산출 (전체, 시간대별, 위치 TOP 5)
+    public DashboardStatsResponse getStats(LocalDate startDate, LocalDate endDate, String camera) {
+        // 1. 파라미터 전처리
+        LocalDateTime start = (startDate != null) ? startDate.atStartOfDay() : null;
+        LocalDateTime end = (endDate != null) ? endDate.atTime(LocalTime.MAX) : null;
+        String cam = (camera != null && !camera.isEmpty() && !camera.equals("전체")) ? camera : null;
 
-        // 필터링 조건 존재 여부 및 날짜 포맷 변환
-        boolean hasDate = (startDate != null && endDate != null);
-        boolean hasCamera = (camera != null && !camera.isEmpty() && !camera.equals("전체"));
+        // 2. 각각의 통계 데이터를 DB에서 조회
+        OverallStatProjection overallProj = repository.getOverallStats(start, end, cam);
+        List<HourlyStatProjection> hourlyProj = repository.getHourlyStats(start, end, cam);
+        List<LocationStatProjection> locationProj = repository.getTopLocations(start, end, cam, PageRequest.of(0, 5)); // TOP 5 추출
 
-        LocalDateTime start = hasDate ? startDate.atStartOfDay() : null;
-        LocalDateTime end = hasDate ? endDate.atTime(LocalTime.MAX) : null;
-
-        // 1. 기간과 구역 조건이 모두 있을 때
-        if (hasDate && hasCamera) {
-            total = repository.countByCameraAndCreatedAtBetween(camera, start, end);
-            helmet = repository.countByViolationTypeAndCameraAndCreatedAtBetween("헬멧 미착용", camera, start, end);
-            sidewalk = repository.countByViolationTypeAndCameraAndCreatedAtBetween("인도 주행", camera, start, end);
-            multiRider = repository.countByViolationTypeAndCameraAndCreatedAtBetween("다인 탑승", camera, start, end);
-        }
-        // 2. 기간 조건만 있을 때
-        else if (hasDate) {
-            total = repository.countByCreatedAtBetween(start, end);
-            helmet = repository.countByViolationTypeAndCreatedAtBetween("헬멧 미착용", start, end);
-            sidewalk = repository.countByViolationTypeAndCreatedAtBetween("인도 주행", start, end);
-            multiRider = repository.countByViolationTypeAndCreatedAtBetween("다인 탑승", start, end);
-        }
-        // 3. 구역 조건만 있을 때
-        else if (hasCamera) {
-            total = repository.countByCamera(camera);
-            helmet = repository.countByViolationTypeAndCamera("헬멧 미착용", camera);
-            sidewalk = repository.countByViolationTypeAndCamera("인도 주행", camera);
-            multiRider = repository.countByViolationTypeAndCamera("다인 탑승", camera);
-        }
-        // 4. 조건이 없을 때 (전체 누적 통계)
-        else {
-            total = repository.count();
-            helmet = repository.countByViolationType("헬멧 미착용");
-            sidewalk = repository.countByViolationType("인도 주행");
-            multiRider = repository.countByViolationType("다인 탑승");
-        }
-
-        Map<String, Integer> stats = new HashMap<>();
-        stats.put("total", (int) total);
-        stats.put("helmet", (int) helmet);
-        stats.put("sidewalk", (int) sidewalk);
-        stats.put("multiRider", (int) multiRider);
-        return stats;
+        // 3. DTO 조립 및 반환 (Null-safe 처리)
+        return DashboardStatsResponse.builder()
+                .overall(DashboardStatsResponse.OverallStats.builder()
+                        .total(overallProj != null && overallProj.getTotal() != null ? overallProj.getTotal() : 0)
+                        .helmet(overallProj != null && overallProj.getHelmet() != null ? overallProj.getHelmet() : 0)
+                        .sidewalk(overallProj != null && overallProj.getSidewalk() != null ? overallProj.getSidewalk() : 0)
+                        .multiRider(overallProj != null && overallProj.getMultiRider() != null ? overallProj.getMultiRider() : 0)
+                        .build())
+                .hourly(hourlyProj.stream()
+                        .map(h -> DashboardStatsResponse.HourlyStat.builder()
+                                .hour(h.getHour())
+                                .count(h.getCount())
+                                .build())
+                        .collect(Collectors.toList()))
+                .topLocations(locationProj.stream()
+                        .map(l -> DashboardStatsResponse.LocationStat.builder()
+                                .location(l.getLocation())
+                                .count(l.getCount())
+                                .build())
+                        .collect(Collectors.toList()))
+                .build();
     }
 }
