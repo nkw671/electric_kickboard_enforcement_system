@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
 import { TYPE_COLOR, BADGE_COLOR, HOVER_COLOR } from '../constants'
-import { DUMMY_VIOLATIONS } from '../data/dummyData'
 import useApi from '../hooks/useApi'
 import styles from './ViolationsPage.module.css'
 
@@ -55,12 +54,17 @@ function ViolationsPage() {
   const [page, setPage] = useState(1)
   const [selected, setSelected] = useState(null)
 
-  const { data: apiData, loading } = useApi('/api/violations?limit=9999')
-  const violations = (apiData && apiData.length > 0) ? apiData : DUMMY_VIOLATIONS
+  const { data: apiData, loading, error } = useApi('/api/violations?limit=9999')
+  const violations = useMemo(() => apiData || [], [apiData])
 
-  useEffect(() => {
+  // 필터가 바뀌면 페이지를 1로 되돌린다. 렌더 중 조건부 setState로 처리해
+  // effect 안에서 setState를 호출하지 않도록 함(cascading render 방지).
+  const filterKey = `${filter}|${startDate}|${endDate}`
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey)
+  if (filterKey !== prevFilterKey) {
+    setPrevFilterKey(filterKey)
     setPage(1)
-  }, [filter, startDate, endDate])
+  }
 
   useEffect(() => {
     if (!selected) return
@@ -87,6 +91,7 @@ function ViolationsPage() {
   const paginated = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE)
 
   if (loading) return <div className={styles.status}>불러오는 중...</div>
+  if (error) return <div className={styles.statusError}>서버에 연결할 수 없습니다.</div>
 
   return (
     <div className={styles.page}>
