@@ -53,14 +53,20 @@ function StatsPage() {
     }))
   , [violations])
 
+  // 0~23시 버킷을 항상 다 만들어 둔다. 실제로 기록이 있는 시간대만 버킷을 만들면
+  // (특히 발표 데모처럼 데이터가 한두 시간대에 몰릴 때) 막대가 하나뿐이라 차트
+  // 폭 전체를 꽉 채워버리는 문제가 있었음.
   const timeData = useMemo(() => {
     const buckets = {}
+    for (let h = 0; h < 24; h++) {
+      const hour = String(h).padStart(2, '0') + '시'
+      buckets[hour] = { time: hour, '헬멧 미착용': 0, '다인 탑승': 0, '인도 주행': 0 }
+    }
     violations.forEach(v => {
       const hour = v.timestamp.slice(11, 13) + '시'
-      if (!buckets[hour]) buckets[hour] = { time: hour, '헬멧 미착용': 0, '다인 탑승': 0, '인도 주행': 0 }
-      if (v.type in buckets[hour]) buckets[hour][v.type]++
+      if (v.type in (buckets[hour] || {})) buckets[hour][v.type]++
     })
-    return Object.values(buckets).sort((a, b) => a.time.localeCompare(b.time))
+    return Object.values(buckets)
   }, [violations])
 
   if (loading) return <div className={styles.status}>불러오는 중...</div>
