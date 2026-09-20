@@ -5,6 +5,7 @@ import com.kickboard.back.dto.ViolationCreateRequest;
 import com.kickboard.back.dto.ViolationResponse;
 import com.kickboard.back.service.ViolationRecordService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -33,12 +34,13 @@ public class ViolationRecordController {
     // 프론트엔드 단속 기록 데이터 제공 (GET /api/violations)
     // 유형(type)과 구역(camera) 조건을 조합하여 최신 기록을 조회합니다.
     @GetMapping("/violations")
-    public List<ViolationResponse> getViolations(
+    public Page<ViolationResponse> getViolations(
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String camera,
-            @RequestParam(defaultValue = "10") int limit
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
     ) {
-        return service.getRecentViolations(type, camera, limit);
+        return service.getRecentViolations(type, camera, page, size);
     }
 
     // 프론트엔드 대시보드용 위반 통계 데이터 제공 (GET /api/stats)

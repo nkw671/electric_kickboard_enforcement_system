@@ -10,6 +10,7 @@ import com.kickboard.back.repository.ViolationRecordRepository.LocationStatProje
 import com.kickboard.back.repository.ViolationRecordRepository.OverallStatProjection;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -79,36 +80,37 @@ public class ViolationRecordService {
     }
 
     // ==========================================
-    // 단속 기록 목록 조회 (필터링 적용)
+    // 단속 기록 목록 조회 (필터링 및 페이징 적용)
     // ==========================================
 
     // 프론트엔드 요청 조건(유형, 구역, 개수)에 따른 단속 기록 조회
-    public List<ViolationResponse> getRecentViolations(String type, String camera, int limit) {
-        Pageable pageable = PageRequest.of(0, limit, Sort.by(Sort.Direction.DESC, "createdAt"));
-        List<ViolationRecord> records;
+    public Page<ViolationResponse> getRecentViolations(String type, String camera, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        Page<ViolationRecord> recordPage;
 
         // 필터링 조건 존재 여부 확인
         boolean hasType = (type != null && !type.isEmpty() && !type.equals("전체"));
         boolean hasCamera = (camera != null && !camera.isEmpty() && !camera.equals("전체"));
-
         // 1. 유형과 구역 조건이 모두 있을 때
         if (hasType && hasCamera) {
-            records = repository.findByViolationTypeAndCamera(type, camera, pageable);
+            recordPage = repository.findByViolationTypeAndCamera(type, camera, pageable);
         }
         // 2. 유형 조건만 있을 때
         else if (hasType) {
-            records = repository.findByViolationType(type, pageable);
+            recordPage = repository.findByViolationType(type, pageable);
         }
         // 3. 구역 조건만 있을 때
+
         else if (hasCamera) {
-            records = repository.findByCamera(camera, pageable);
+            recordPage = repository.findByCamera(camera, pageable);
         }
         // 4. 조건이 없거나 "전체"일 때
         else {
-            records = repository.findAll(pageable).getContent();
+            recordPage = repository.findAll(pageable);
         }
 
-        return records.stream().map(ViolationResponse::new).collect(Collectors.toList());
+        // Page 객체 내부의 Entity들을 DTO로 변환하여 반환
+        return recordPage.map(ViolationResponse::new);
     }
 
     // ==========================================
