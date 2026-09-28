@@ -122,7 +122,7 @@ class ConnectAPI:
                         + config.latest_frame +
                         b"\r\n"
                     )
-                await asyncio.sleep(0.03)
+                await asyncio.sleep(config.STREAM_INTERVAL)
         return StreamingResponse(
             generate(),
             media_type="multipart/x-mixed-replace; boundary=frame"
