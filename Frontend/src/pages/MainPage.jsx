@@ -1,12 +1,14 @@
 import { useState, useRef, useEffect } from 'react'
 import { TYPE_COLOR, FEED_MAX_COUNT } from '../constants'
-import { extractTime } from '../utils'
+import { extractTime, toViolationList } from '../utils'
 import useApi from '../hooks/useApi'
 import useSSE from '../hooks/useSSE'
 import styles from './MainPage.module.css'
 
 function MainPage() {
-  const { data: violations, loading, error, connected } = useApi('/api/violations?limit=10')
+  // limit(기존)과 size(페이지네이션 적용 후)를 같이 보냄 — 백엔드 머지 후 limit 제거
+  const { data, loading, error, connected } = useApi('/api/violations?limit=10&size=10')
+  const violations = toViolationList(data)
 
   const [toast, setToast] = useState(null)
   const toastTimerRef = useRef(null)
