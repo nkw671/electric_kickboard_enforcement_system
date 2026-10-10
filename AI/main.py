@@ -36,4 +36,5 @@ if __name__ == "__main__":
     loop = DetectionLoop(model=model, renderer=renderer, decider=decider)
     Thread(target=loop.run, daemon=True).start()
 
-    uvicorn.run(api.app, host="0.0.0.0", port=8000)
+    port = int(os.environ.get("PORT", 8000))   # 배포 시 환경변수로 재정의
+    uvicorn.run(api.app, host="0.0.0.0", port=port)
