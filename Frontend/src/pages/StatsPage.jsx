@@ -1,12 +1,11 @@
 import { useMemo } from 'react'
 import useApi from '../hooks/useApi'
+import { toViolationList } from '../utils'
 import styles from './StatsPage.module.css'
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend,
 } from 'recharts'
-
-const TYPES = ['헬멧 미착용', '다인 탑승', '인도 주행']
 
 const TYPE_ICON = {
   '헬멧 미착용': (
@@ -41,26 +40,41 @@ const TYPE_CONFIG = {
 
 
 function StatsPage() {
-  const { data: apiData, loading, error } = useApi('/api/violations?limit=9999')
-  const violations = useMemo(() => apiData || [], [apiData])
+  // 요약 카드/파이 차트는 서버가 집계해주는 /api/stats를 그대로 쓴다.
+  // 시간대별 차트만 백엔드에 시간대별 집계 API가 아직 없어서 전체 기록을
+  // 받아 클라이언트에서 집계한다.
+  // /api/stats: 백엔드 머지 후에는 { overall: {...} }, 그 전에는 평탄한 객체 — 둘 다 지원
+  const { data: statsData, loading: statsLoading, error: statsError } = useApi('/api/stats')
+  const overall = statsData?.overall ?? statsData
+  // limit(기존)과 size(페이지네이션 적용 후)를 같이 보냄 — 백엔드 머지 후 limit 제거
+  const { data: apiData, loading: violationsLoading, error: violationsError } = useApi('/api/violations?limit=9999&size=9999')
+  const violations = useMemo(() => toViolationList(apiData), [apiData])
 
-  const total = violations.length
+  const loading = statsLoading || violationsLoading
+  const error = statsError || violationsError
 
-  const typeData = useMemo(() =>
-    TYPES.map(type => ({
-      name: type,
-      value: violations.filter(v => v.type === type).length,
-    }))
-  , [violations])
+  const total = overall?.total ?? 0
 
+  const typeData = useMemo(() => [
+    { name: '헬멧 미착용', value: overall?.helmet ?? 0 },
+    { name: '다인 탑승', value: overall?.multiRider ?? 0 },
+    { name: '인도 주행', value: overall?.sidewalk ?? 0 },
+  ], [overall])
+
+  // 0~23시 버킷을 항상 다 만들어 둔다. 실제로 기록이 있는 시간대만 버킷을 만들면
+  // (특히 발표 데모처럼 데이터가 한두 시간대에 몰릴 때) 막대가 하나뿐이라 차트
+  // 폭 전체를 꽉 채워버리는 문제가 있었음.
   const timeData = useMemo(() => {
     const buckets = {}
+    for (let h = 0; h < 24; h++) {
+      const hour = String(h).padStart(2, '0') + '시'
+      buckets[hour] = { time: hour, '헬멧 미착용': 0, '다인 탑승': 0, '인도 주행': 0 }
+    }
     violations.forEach(v => {
       const hour = v.timestamp.slice(11, 13) + '시'
-      if (!buckets[hour]) buckets[hour] = { time: hour, '헬멧 미착용': 0, '다인 탑승': 0, '인도 주행': 0 }
-      if (v.type in buckets[hour]) buckets[hour][v.type]++
+      if (v.type in (buckets[hour] || {})) buckets[hour][v.type]++
     })
-    return Object.values(buckets).sort((a, b) => a.time.localeCompare(b.time))
+    return Object.values(buckets)
   }, [violations])
 
   if (loading) return <div className={styles.status}>불러오는 중...</div>

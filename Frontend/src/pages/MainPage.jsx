@@ -1,23 +1,49 @@
 import { useState, useRef, useEffect } from 'react'
 import { TYPE_COLOR, FEED_MAX_COUNT } from '../constants'
-import { extractTime } from '../utils'
+import { extractTime, toViolationList } from '../utils'
 import useApi from '../hooks/useApi'
 import useSSE from '../hooks/useSSE'
 import styles from './MainPage.module.css'
 
 function MainPage() {
-  const { data: violations, loading, error, connected } = useApi('/api/violations?limit=10')
+  // limit(기존)과 size(페이지네이션 적용 후)를 같이 보냄 — 백엔드 머지 후 limit 제거
+  const { data, loading, error, connected } = useApi('/api/violations?limit=10&size=10')
+  const violations = toViolationList(data)
 
   const [toast, setToast] = useState(null)
   const toastTimerRef = useRef(null)
   const [currentTime, setCurrentTime] = useState('')
   const [streamError, setStreamError] = useState(false)
   const [streamKey, setStreamKey] = useState(0)
+  const streamAttemptRef = useRef(0)
+  const streamRetryTimerRef = useRef(null)
 
+  // 수동 재연결: 즉시 다시 시도하고 백오프 카운트를 리셋한다.
   const retryStream = () => {
+    clearTimeout(streamRetryTimerRef.current)
+    streamAttemptRef.current = 0
     setStreamError(false)
     setStreamKey(k => k + 1)
   }
+
+  // 스트림이 끊기면 지수 백오프(1s -> 2s -> ... 최대 30s)로 자동 재연결한다.
+  const handleStreamError = () => {
+    setStreamError(true)
+    const delay = Math.min(1000 * 2 ** streamAttemptRef.current, 30000)
+    streamAttemptRef.current += 1
+    streamRetryTimerRef.current = setTimeout(() => {
+      setStreamError(false)
+      setStreamKey(k => k + 1)
+    }, delay)
+  }
+
+  const handleStreamLoad = () => {
+    streamAttemptRef.current = 0
+  }
+
+  useEffect(() => {
+    return () => clearTimeout(streamRetryTimerRef.current)
+  }, [])
 
   useEffect(() => {
     const tick = () => {
@@ -37,7 +63,7 @@ function MainPage() {
     return () => clearInterval(id)
   }, [])
 
-  useSSE('/api/stream', (violation) => {
+  const { connected: sseConnected } = useSSE('/api/stream', (violation) => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
     setToast(violation)
     toastTimerRef.current = setTimeout(() => setToast(null), 4000)
@@ -46,8 +72,8 @@ function MainPage() {
   if (error) return <div className={styles.statusError}>서버에 연결할 수 없습니다.</div>
   if (loading) return <div className={styles.status}>불러오는 중...</div>
 
-  // Backend(위반 목록 폴링)와 AI 영상 스트림이 둘 다 정상일 때만 "정상 작동"으로 표시한다.
-  const systemOk = connected && !streamError
+  // Backend(위반 목록 폴링), AI 영상 스트림, 실시간 알림(SSE) 셋 다 정상일 때만 "정상 작동"으로 표시한다.
+  const systemOk = connected && !streamError && sseConnected
 
   return (
     <div className={styles.page}>
@@ -97,12 +123,13 @@ function MainPage() {
                 src={`/ai/video/stream?t=${streamKey}`}
                 className={styles.stream}
                 alt="stream"
-                onError={() => setStreamError(true)}
+                onError={handleStreamError}
+                onLoad={handleStreamLoad}
               />
             ) : (
               <button className={styles.streamPlaceholder} onClick={retryStream}>
                 영상 스트림 영역<br />
-                <small>AI 서버 연결 후 활성화 · 클릭하여 재연결</small>
+                <small>AI 서버 연결 후 활성화 · 자동 재연결 중 · 클릭하여 즉시 재연결</small>
               </button>
             )}
             {currentTime && (
@@ -132,6 +159,9 @@ function MainPage() {
           <div className={styles.sideCard}>
             <div className={styles.sideCardHeader}>
               <span className={styles.sideCardTitle}>실시간 위반 알림</span>
+              {!sseConnected && (
+                <span className={`${styles.statusBadge} ${styles.statusBadgeWarn}`}>재연결 중</span>
+              )}
             </div>
             <ul className={styles.feedList}>
               {violations.slice(0, FEED_MAX_COUNT).map((v) => (

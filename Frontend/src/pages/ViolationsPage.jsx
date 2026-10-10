@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { TYPE_COLOR, BADGE_COLOR, HOVER_COLOR } from '../constants'
 import useApi from '../hooks/useApi'
+import { toViolationList } from '../utils'
 import styles from './ViolationsPage.module.css'
 
 const MODAL_BADGE = {
@@ -54,8 +55,9 @@ function ViolationsPage() {
   const [page, setPage] = useState(1)
   const [selected, setSelected] = useState(null)
 
-  const { data: apiData, loading, error } = useApi('/api/violations?limit=9999')
-  const violations = useMemo(() => apiData || [], [apiData])
+  // limit(기존)과 size(페이지네이션 적용 후)를 같이 보냄 — 백엔드 머지 후 limit 제거
+  const { data: apiData, loading, error } = useApi('/api/violations?limit=9999&size=9999')
+  const violations = useMemo(() => toViolationList(apiData), [apiData])
 
   // 필터가 바뀌면 페이지를 1로 되돌린다. 렌더 중 조건부 setState로 처리해
   // effect 안에서 setState를 호출하지 않도록 함(cascading render 방지).
