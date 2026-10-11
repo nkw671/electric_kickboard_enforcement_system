@@ -60,7 +60,8 @@ src/main/java/com/kickboard/back/
 │
 ├── dto/                          # AI, 프론트와 주고받는 데이터 전송 객체
 │   ├── ViolationCreateRequest.java   # AI -> Back 수신용 DTO (유효성 검사 포함)
-│   └── ViolationResponse.java        # Back -> Front 송신용 DTO
+│   ├── ViolationResponse.java        # Back -> Front 송신용 DTO
+│   └── DashboardStatsResponse.java   # 대시보드 다차원 통계 응답용 DTO
 │
 └── exception/                    # 전역 예외 처리기
     └── GlobalExceptionHandler.java
@@ -123,32 +124,45 @@ AI 서버에서 감지한 위반 데이터를 DB에 저장하고, 연결된 프�
 
 ### 2\. 단속 기록 조회 (Back -\> Front)
 
-프론트엔드 메인 페이지 및 위반 기록 페이지에서 사용할 위반 목록을 최신순으로 반환합니다. 위반 유형과 카메라 번호를 지정하면 해당 조건의 데이터만 필터링하여 제공합니다.
+프론트엔드 메인 페이지 및 위반 기록 페이지에서 사용할 위반 목록을 페이징 처리하여 반환합니다. 위반 유형과 카메라 번호를 지정하면 해당 조건의 데이터만 필터링하여 제공합니다. 서버 사이드 페이지네이션 메타데이터가 함께 포함됩니다.
 
   * **URL:** `GET /api/violations`
   * **Query Parameter:**
       * `type` (선택): 조회할 위반 유형 (예: `헬멧 미착용`, `인도 주행`). 지정하지 않거나 `전체`로 요청 시 모든 내역 반환.
       * `camera` (선택): 조회할 카메라 구역 (예: `CAM-01`). 지정하지 않거나 `전체`로 요청 시 모든 내역 반환.
-      * `limit` (선택): 가져올 데이터 개수 (기본값: 10)
-      * 예시: `GET /api/violations?type=헬멧 미착용&camera=CAM-01&limit=50`
-  * **Response:**
+      * `page` (선택): 페이지 번호 (0부터 시작, 기본값: 0)
+      * `size` (선택): 한 페이지당 가져올 데이터 개수 (기본값: 10)
+      * 예시: `GET /api/violations?type=헬멧 미착용&camera=CAM-01&page=0&size=5`
+* **Response:**
     ```json
-    [
-      {
-        "id": 1,
-        "type": "인도 주행",
-        "image_url": "https://example.com/images/sidewalk_001.jpg",
-        "camera": "CAM-01",
-        "location": "Zone-1",
-        "confidence": 94,
-        "timestamp": "2025-03-28 14:32:01"
-      }
-    ]
+    {
+      "content": [
+        {
+          "id": 1,
+          "type": "인도 주행",
+          "image_url": "https://example.com/images/sidewalk_001.jpg",
+          "camera": "CAM-01",
+          "location": "Zone-1",
+          "confidence": 94,
+          "timestamp": "2025-03-28 14:32:01"
+        }
+      ],
+      "pageable": {
+        "pageNumber": 0,
+        "pageSize": 5
+      },
+      "last": false,
+      "totalPages": 10,
+      "totalElements": 47,
+      "first": true,
+      "numberOfElements": 5,
+      "empty": false
+    }
     ```
 
 ### 3\. 실시간 통계 조회 (Back -\> Front)
 
-프론트엔드 통계 카드에 표시될 위반 건수를 반환합니다. 필터 파라미터가 없을 경우 전체 누적 통계를, 파라미터가 입력될 경우 해당 기간/구역 내의 통계를 계산하여 반환합니다.
+프론트엔드 대시보드에 표시될 다차원 통계 데이터를 단일 쿼리로 반환합니다. 필터 조건에 맞춰 전체 누적 건수, 시간대별 발생 추이, 위반 다발 구역(TOP 5)을 제공합니다.
 
   * **URL:** `GET /api/stats`
   * **Query Parameter:**
@@ -159,10 +173,32 @@ AI 서버에서 감지한 위반 데이터를 DB에 저장하고, 연결된 프�
   * **Response:**
     ```json
     {
-      "total": 12,
-      "helmet": 7,
-      "sidewalk": 3,
-      "multiRider": 2
+      "overall": {
+        "total": 12,
+        "helmet": 7,
+        "sidewalk": 3,
+        "multiRider": 2
+      },
+      "hourly": [
+        {
+          "hour": 14,
+          "count": 5
+        },
+        {
+          "hour": 15,
+          "count": 7
+        }
+      ],
+      "topLocations": [
+        {
+          "location": "Zone-1",
+          "count": 8
+        },
+        {
+          "location": "Zone-2",
+          "count": 4
+        }
+      ]
     }
     ```
 
