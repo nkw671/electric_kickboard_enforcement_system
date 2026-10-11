@@ -1,9 +1,11 @@
 package com.kickboard.back.controller;
 
+import com.kickboard.back.dto.DashboardStatsResponse;
 import com.kickboard.back.dto.ViolationCreateRequest;
 import com.kickboard.back.dto.ViolationResponse;
 import com.kickboard.back.service.ViolationRecordService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -11,14 +13,12 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
 import jakarta.validation.Valid;
 
 // AI 데이터 수신(POST) 및 프론트엔드 데이터 제공(GET)을 담당하는 API 엔드포인트 클래스
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "http://localhost:5173")
 public class ViolationRecordController {
 
     private final ViolationRecordService service;
@@ -33,18 +33,18 @@ public class ViolationRecordController {
     // 프론트엔드 단속 기록 데이터 제공 (GET /api/violations)
     // 유형(type)과 구역(camera) 조건을 조합하여 최신 기록을 조회합니다.
     @GetMapping("/violations")
-    public List<ViolationResponse> getViolations(
+    public Page<ViolationResponse> getViolations(
             @RequestParam(required = false) String type,
             @RequestParam(required = false) String camera,
-            @RequestParam(defaultValue = "10") int limit
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
     ) {
-        return service.getRecentViolations(type, camera, limit);
+        return service.getRecentViolations(type, camera, page, size);
     }
 
     // 프론트엔드 대시보드용 위반 통계 데이터 제공 (GET /api/stats)
-    // 기간(startDate~endDate) 및 구역(camera) 조건에 따른 통계를 반환합니다.
     @GetMapping("/stats")
-    public Map<String, Integer> getStats(
+    public DashboardStatsResponse getStats(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @RequestParam(required = false) String camera
@@ -54,8 +54,12 @@ public class ViolationRecordController {
 
     // 프론트엔드 실시간 알림(SSE) 수신용 스트림 연결 (GET /api/stream)
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public SseEmitter subscribe() {
+    public SseEmitter subscribe(jakarta.servlet.http.HttpServletResponse response) {
+        // Nginx 등 리버스 프록시 환경에서 SSE 버퍼링 방지 및 캐시 무효화 헤더 세팅
+        response.setHeader("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate");
+        response.setHeader("Pragma", "no-cache");
+        response.setHeader("Expires", "0");
+        response.setHeader("X-Accel-Buffering", "no");
         return service.subscribe();
     }
-
 }
