@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { aiUrl } from '../config'
 import styles from './ZonePage.module.css'
 
 // 스트림이 로드되기 전(미연결 등) 사용할 기본 해상도. 연결되면 영상 실제 해상도로 자동 교체된다.
@@ -33,7 +34,7 @@ function ZonePage() {
   const [videoDims, setVideoDims] = useState({ w: DEFAULT_W, h: DEFAULT_H })
 
   useEffect(() => {
-    fetch('/ai/zones')
+    fetch(aiUrl('/zones'))
       .then(r => r.json())
       .then(data => {
         setZones(data.zones || [])
@@ -153,7 +154,7 @@ function ZonePage() {
 
   const saveZones = async () => {
     try {
-      const res = await fetch('/ai/zones', {
+      const res = await fetch(aiUrl('/zones'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ zones: zones.map(z => ({ name: z.name, pts: z.pts, color: z.color })) }),
@@ -168,7 +169,7 @@ function ZonePage() {
 
   const deleteAllZones = async () => {
     try {
-      await fetch('/ai/zones', { method: 'DELETE' })
+      await fetch(aiUrl('/zones'), { method: 'DELETE' })
       setZones([])
       setStatus({ ok: true, msg: '전체 삭제 완료' })
     } catch {
@@ -193,7 +194,7 @@ function ZonePage() {
             {aiConnected && !streamError ? (
               <img
                 ref={imgRef}
-                src="/ai/video/stream"
+                src={aiUrl('/video/stream')}
                 className={styles.canvasVideo}
                 alt="stream"
                 onError={() => setStreamError(true)}

@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import useApi from '../hooks/useApi'
+import { apiUrl } from '../config'
 import { toViolationList } from '../utils'
 import styles from './StatsPage.module.css'
 import {
@@ -44,10 +45,10 @@ function StatsPage() {
   // 시간대별 차트만 백엔드에 시간대별 집계 API가 아직 없어서 전체 기록을
   // 받아 클라이언트에서 집계한다.
   // /api/stats: 백엔드 머지 후에는 { overall: {...} }, 그 전에는 평탄한 객체 — 둘 다 지원
-  const { data: statsData, loading: statsLoading, error: statsError } = useApi('/api/stats')
+  const { data: statsData, loading: statsLoading, error: statsError } = useApi(apiUrl('/api/stats'))
   const overall = statsData?.overall ?? statsData
   // limit(기존)과 size(페이지네이션 적용 후)를 같이 보냄 — 백엔드 머지 후 limit 제거
-  const { data: apiData, loading: violationsLoading, error: violationsError } = useApi('/api/violations?limit=9999&size=9999')
+  const { data: apiData, loading: violationsLoading, error: violationsError } = useApi(apiUrl('/api/violations?limit=9999&size=9999'))
   const violations = useMemo(() => toViolationList(apiData), [apiData])
 
   const loading = statsLoading || violationsLoading

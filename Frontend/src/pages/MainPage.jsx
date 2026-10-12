@@ -1,13 +1,14 @@
 import { useState, useRef, useEffect } from 'react'
 import { TYPE_COLOR, FEED_MAX_COUNT } from '../constants'
 import { extractTime, toViolationList } from '../utils'
+import { apiUrl, aiUrl } from '../config'
 import useApi from '../hooks/useApi'
 import useSSE from '../hooks/useSSE'
 import styles from './MainPage.module.css'
 
 function MainPage() {
   // limit(기존)과 size(페이지네이션 적용 후)를 같이 보냄 — 백엔드 머지 후 limit 제거
-  const { data, loading, error, connected } = useApi('/api/violations?limit=10&size=10')
+  const { data, loading, error, connected } = useApi(apiUrl('/api/violations?limit=10&size=10'))
   const violations = toViolationList(data)
 
   const [toast, setToast] = useState(null)
@@ -63,7 +64,7 @@ function MainPage() {
     return () => clearInterval(id)
   }, [])
 
-  const { connected: sseConnected } = useSSE('/api/stream', (violation) => {
+  const { connected: sseConnected } = useSSE(apiUrl('/api/stream'), (violation) => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
     setToast(violation)
     toastTimerRef.current = setTimeout(() => setToast(null), 4000)
@@ -120,7 +121,7 @@ function MainPage() {
           <div className={styles.streamBody}>
             {!streamError ? (
               <img
-                src={`/ai/video/stream?t=${streamKey}`}
+                src={aiUrl(`/video/stream?t=${streamKey}`)}
                 className={styles.stream}
                 alt="stream"
                 onError={handleStreamError}
