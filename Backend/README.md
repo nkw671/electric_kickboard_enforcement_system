@@ -30,7 +30,7 @@ spring:
     password: 본인의_DB_비밀번호
 app:
   cors:
-    allowed-origins: "http://localhost:5173"
+    allowed-origin-patterns: "http://localhost:5173"
 ```
 
 ### 2\. 백엔드 서버 실행 (http://localhost:8080)

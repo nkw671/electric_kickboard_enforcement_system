@@ -18,4 +18,4 @@ springdoc:
 # 사용자 정의 환경 변수 (CORS 허용 도메인)
 app:
   cors:
-    allowed-origins: "https://kickdan.com,https://www.kickdan.com"
+    allowed-origin-patterns: "https://kickdan.com,https://www.kickdan.com,https://*.vercel.app"
