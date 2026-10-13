@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.LocalDate;
-import java.util.List;
 import jakarta.validation.Valid;
 
 // AI 데이터 수신(POST) 및 프론트엔드 데이터 제공(GET)을 담당하는 API 엔드포인트 클래스

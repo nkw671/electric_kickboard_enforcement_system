@@ -67,7 +67,8 @@ src/main/java/com/kickboard/back/
 ├── dto/                          # AI, 프론트와 주고받는 데이터 전송 객체
 │   ├── ViolationCreateRequest.java   # AI -> Back 수신용 DTO (유효성 검사 포함)
 │   ├── ViolationResponse.java        # Back -> Front 송신용 DTO
-│   └── DashboardStatsResponse.java   # 대시보드 다차원 통계 응답용 DTO
+│   ├── DashboardStatsResponse.java   # 대시보드 다차원 통계 응답용 DTO
+│   └── ErrorResponse.java            # 프론트엔드 정규화 처리용 공통 에러 응답 DTO
 │
 └── exception/                    # 전역 예외 처리기
     └── GlobalExceptionHandler.java
@@ -120,11 +121,17 @@ AI 서버에서 감지한 위반 데이터를 DB에 저장하고, 연결된 프�
     }
     ```
   * **Response:** `200 OK` "단속 데이터 저장 성공"
-  * **Response:** `400 Bad Request` (필수 데이터가 누락되거나 조건에 맞지 않을 경우 반려 사유 반환)
+  * **Response:** `400 Bad Request` (필수 데이터가 누락되거나 조건에 맞지 않을 경우 정규화된 에러 포맷 반환)
     ```json
     {
-      "type": "위반 유형(type)은 필수 입력값입니다.",
-      "confidence": "신뢰도는 100 이하여야 합니다."
+      "timestamp": "2026-10-10T14:00:00",
+      "status": 400,
+      "errorCode": "VALIDATION_FAILED",
+      "message": "입력값 검증에 실패했습니다. 상세 내역을 확인해주세요.",
+      "errors": {
+        "type": "위반 유형(type)은 필수 입력값입니다.",
+        "confidence": "신뢰도는 100 이하여야 합니다."
+      }
     }
     ```
 
