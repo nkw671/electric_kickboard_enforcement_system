@@ -288,7 +288,6 @@
   right: 24px;
   background-color: #ffffff;
   border: 1px solid #e8ecf3;
-  border-left: 4px solid #2563eb;
   border-radius: 8px;
   padding: 14px 18px;
   box-shadow: 0 4px 20px rgba(0, 20, 60, 0.12);
@@ -338,4 +337,17 @@
   margin-left: auto;
   font-size: 14px;
   color: #8a9bb5;
+}
+
+/* 실시간 피드 카드 안에서만 보여주는 로딩/에러 상태 */
+.feedStatus,
+.feedStatusError {
+  padding: 24px 12px;
+  text-align: center;
+  font-size: 14px;
+  color: #5a6a85;
+}
+
+.feedStatusError {
+  color: #b91c1c;
 }
