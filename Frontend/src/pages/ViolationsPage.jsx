@@ -48,23 +48,8 @@ function formatTimestamp(ts) {
 }
 
 const ITEMS_PER_PAGE = 10
-const PAGE_WINDOW = 2 // 현재 페이지 앞뒤로 보여줄 페이지 버튼 수
-
-/**
- * 페이지 버튼 목록. 첫/마지막 페이지와 현재 페이지 주변만 보여주고
- * 사이는 '…'로 생략한다. 예: 1 … 4 5 [6] 7 8 … 20
- */
-function getPageItems(page, totalPages) {
-  const items = []
-  for (let p = 1; p <= totalPages; p++) {
-    if (p === 1 || p === totalPages || Math.abs(p - page) <= PAGE_WINDOW) {
-      items.push(p)
-    } else if (items[items.length - 1] !== '…') {
-      items.push('…')
-    }
-  }
-  return items
-}
+// 페이지 버튼을 5개씩 묶어서 보여준다. 예: « ‹ 11 12 [13] 14 15 › »
+const PAGE_BLOCK = 5
 
 function ViolationsPage() {
   const [filter, setFilter] = useState('전체')
@@ -108,6 +93,9 @@ function ViolationsPage() {
   const handleReset = () => { setFilter('전체'); setStartDate(''); setEndDate('') }
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE)
+  const blockStart = Math.floor((page - 1) / PAGE_BLOCK) * PAGE_BLOCK + 1
+  const blockEnd = Math.min(blockStart + PAGE_BLOCK - 1, totalPages)
+  const blockPages = Array.from({ length: blockEnd - blockStart + 1 }, (_, i) => blockStart + i)
   const paginated = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE)
 
   if (loading) return <div className={styles.status}>불러오는 중...</div>
@@ -259,21 +247,19 @@ function ViolationsPage() {
 
       {totalPages > 1 && (
         <div className={styles.pagination}>
-          <button className={styles.pageBtn} onClick={() => setPage(p => p - 1)} disabled={page === 1}>←</button>
-          {getPageItems(page, totalPages).map((p, i) => (
-            p === '…' ? (
-              <span key={`gap-${i}`} className={styles.pageGap}>…</span>
-            ) : (
-              <button
-                key={p}
-                className={`${styles.pageBtn} ${p === page ? styles.pageActive : ''}`}
-                onClick={() => setPage(p)}
-              >
-                {p}
-              </button>
-            )
+          <button className={styles.pageBtn} onClick={() => setPage(1)} disabled={page === 1} aria-label="첫 페이지">«</button>
+          <button className={styles.pageBtn} onClick={() => setPage(blockStart - PAGE_BLOCK)} disabled={blockStart === 1} aria-label="이전 묶음">‹</button>
+          {blockPages.map(p => (
+            <button
+              key={p}
+              className={`${styles.pageBtn} ${p === page ? styles.pageActive : ''}`}
+              onClick={() => setPage(p)}
+            >
+              {p}
+            </button>
           ))}
-          <button className={styles.pageBtn} onClick={() => setPage(p => p + 1)} disabled={page === totalPages}>→</button>
+          <button className={styles.pageBtn} onClick={() => setPage(blockStart + PAGE_BLOCK)} disabled={blockEnd === totalPages} aria-label="다음 묶음">›</button>
+          <button className={styles.pageBtn} onClick={() => setPage(totalPages)} disabled={page === totalPages} aria-label="마지막 페이지">»</button>
         </div>
       )}
 

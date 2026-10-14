@@ -530,18 +530,11 @@
   cursor: not-allowed;
 }
 
-.pageActive {
+.pageActive,
+.pageActive:hover:not(:disabled) {
   background-color: #2563eb;
   border-color: #2563eb;
   color: #ffffff;
   font-weight: 600;
 }
 
-
-/* 페이지 버튼 사이 생략 표시 */
-.pageGap {
-  width: 24px;
-  text-align: center;
-  color: #94a3b8;
-  user-select: none;
-}
