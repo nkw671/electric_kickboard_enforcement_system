@@ -6,6 +6,9 @@ import styles from './ZonePage.module.css'
 const DEFAULT_W = 800
 const DEFAULT_H = 450
 
+// 첫 꼭짓점에서 이 거리(화면 px) 안을 클릭하면 도형을 닫는다.
+const CLOSE_DISTANCE_PX = 12
+
 const ZONE_COLORS_BGR = [
   [0,   0,   255],
   [0,   165, 255],
@@ -32,6 +35,8 @@ function ZonePage() {
   const [aiConnected, setAiConnected] = useState(false)
   const [streamError, setStreamError] = useState(false)
   const [videoDims, setVideoDims] = useState({ w: DEFAULT_W, h: DEFAULT_H })
+  // 삭제 확인 팝업: { title, message, confirmLabel, onConfirm } 또는 null
+  const [confirmDialog, setConfirmDialog] = useState(null)
 
   // AI 서버(vast.ai)는 필요할 때만 켜두므로, 연결될 때까지 5초마다 다시 시도한다.
   // 연결되면 영상 스트림 에러 상태도 풀어서 영상을 다시 불러온다.
@@ -147,9 +152,23 @@ function ZonePage() {
     if (!isDrawing) return
     const canvas = canvasRef.current
     const rect = canvas.getBoundingClientRect()
-    const x = Math.round((e.clientX - rect.left) * (videoDims.w / rect.width))
+    const scale = videoDims.w / rect.width
+    const x = Math.round((e.clientX - rect.left) * scale)
     const y = Math.round((e.clientY - rect.top) * (videoDims.h / rect.height))
+
+    // 꼭짓점이 3개 이상일 때 첫 점 근처를 클릭하면 구역을 완성한다.
+    if (currentPts.length >= 3) {
+      const [fx, fy] = currentPts[0]
+      if (Math.hypot(x - fx, y - fy) <= CLOSE_DISTANCE_PX * scale) {
+        finishZone()
+        return
+      }
+    }
     setCurrentPts(prev => [...prev, [x, y]])
+  }
+
+  const undoPoint = () => {
+    setCurrentPts(prev => prev.slice(0, -1))
   }
 
   const finishZone = () => {
@@ -166,8 +185,61 @@ function ZonePage() {
     setIsDrawing(false)
   }
 
+  // 그리는 중 단축키: Enter = 완성, Backspace = 마지막 점 되돌리기, Esc = 그리기 취소
+  // (finishZone이 현재 꼭짓점을 쓰므로 currentPts가 바뀔 때마다 리스너를 다시 건다)
+  useEffect(() => {
+    if (!isDrawing || confirmDialog) return
+    const onKeyDown = (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault()
+        finishZone()
+      } else if (e.key === 'Backspace') {
+        e.preventDefault()
+        setCurrentPts(prev => prev.slice(0, -1))
+      } else if (e.key === 'Escape') {
+        setCurrentPts([])
+        setIsDrawing(false)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  })
+
   const deleteZone = (idx) => {
     setZones(prev => prev.filter((_, i) => i !== idx).map((z, i) => ({ ...z, name: `Zone-${i + 1}` })))
+  }
+
+  // 확인 팝업은 Esc로도 닫을 수 있다.
+  useEffect(() => {
+    if (!confirmDialog) return
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setConfirmDialog(null)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [confirmDialog])
+
+  const askDeleteZone = (idx) => {
+    setConfirmDialog({
+      title: `${zones[idx].name} 구역을 삭제할까요?`,
+      message: '삭제 후 AI 서버에 저장을 눌러야 반영됩니다.',
+      confirmLabel: '삭제',
+      onConfirm: () => deleteZone(idx),
+    })
+  }
+
+  const askDeleteAllZones = () => {
+    setConfirmDialog({
+      title: '등록된 구역을 모두 삭제할까요?',
+      message: 'AI 서버에서도 바로 삭제되며 되돌릴 수 없습니다.',
+      confirmLabel: '전체 삭제',
+      onConfirm: deleteAllZones,
+    })
+  }
+
+  const handleConfirm = () => {
+    confirmDialog.onConfirm()
+    setConfirmDialog(null)
   }
 
   const saveZones = async () => {
@@ -199,7 +271,14 @@ function ZonePage() {
 
   return (
     <div className={styles.page}>
-      <h2 className={styles.title}>구역 설정</h2>
+      <div className={styles.header}>
+        <h2 className={styles.title}>인도 구역 설정</h2>
+        <p className={styles.desc}>
+          영상에서 인도 영역을 다각형으로 그려 주세요. 이 영역 안에서 주행하는 킥보드는 인도 주행으로 단속됩니다.
+          <br />
+          구역을 그린 뒤 <strong>AI 서버에 저장</strong>을 눌러야 반영됩니다.
+        </p>
+      </div>
 
       <div className={styles.layout}>
         {/* 캔버스 영역 */}
@@ -247,12 +326,21 @@ function ZonePage() {
             ) : (
               <>
                 <button className={styles.btnSuccess} onClick={finishZone} disabled={currentPts.length < 3}>
-                  완료 ({currentPts.length}점)
+                  완성 <kbd className={styles.kbdOnDark}>Enter</kbd>
                 </button>
-                <button className={styles.btnGhost} onClick={cancelDraw}>취소</button>
+                <button className={styles.btnGhost} onClick={undoPoint} disabled={currentPts.length === 0}>
+                  되돌리기 <kbd className={styles.kbd}>Backspace</kbd>
+                </button>
+                <button className={styles.btnGhost} onClick={cancelDraw}>
+                  취소 <kbd className={styles.kbd}>Esc</kbd>
+                </button>
               </>
             )}
-            <span className={styles.hint}>최소 3개 꼭짓점 필요</span>
+            <span className={styles.hint}>
+              {isDrawing
+                ? '꼭짓점 3개 이상 찍은 뒤 첫 점을 다시 클릭하면 완성'
+                : '꼭짓점을 3개 이상 찍어 구역을 만듭니다'}
+            </span>
           </div>
         </div>
 
@@ -271,8 +359,8 @@ function ZonePage() {
                 <div key={i} className={styles.zoneItem}>
                   <span className={styles.zoneDot} style={{ backgroundColor: bgrToHex(zone.color) }} />
                   <span className={styles.zoneName}>{zone.name}</span>
-                  <span className={styles.zonePts}>{zone.pts.length}pt</span>
-                  <button className={styles.zoneDeleteBtn} onClick={() => deleteZone(i)}>✕</button>
+                  <span className={styles.zonePts}>꼭짓점 {zone.pts.length}개</span>
+                  <button className={styles.zoneDeleteBtn} onClick={() => askDeleteZone(i)} aria-label={`${zone.name} 삭제`}>✕</button>
                 </div>
               ))
             )}
@@ -284,15 +372,29 @@ function ZonePage() {
                 {status.msg}
               </div>
             )}
-            <button className={styles.btnSave} onClick={saveZones} disabled={zones.length === 0}>
+            <button className={styles.btnSave} onClick={saveZones}>
               AI 서버에 저장
             </button>
-            <button className={styles.btnDelete} onClick={deleteAllZones} disabled={zones.length === 0}>
+            <button className={styles.btnDelete} onClick={askDeleteAllZones} disabled={zones.length === 0}>
               전체 삭제
             </button>
           </div>
         </div>
       </div>
+
+      {confirmDialog && (
+        <div className={styles.dialogOverlay} onClick={() => setConfirmDialog(null)}>
+          <div className={styles.dialog} role="alertdialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <p className={styles.dialogTitle}>{confirmDialog.title}</p>
+            <p className={styles.dialogMessage}>{confirmDialog.message}</p>
+            <div className={styles.dialogActions}>
+              {/* 실수로 Enter를 눌러도 삭제되지 않도록 취소 버튼에 포커스를 둔다. */}
+              <button className={styles.btnGhost} onClick={() => setConfirmDialog(null)} autoFocus>취소</button>
+              <button className={styles.btnDanger} onClick={handleConfirm}>{confirmDialog.confirmLabel}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
