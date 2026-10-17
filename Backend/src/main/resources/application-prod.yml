@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: back
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # 추후 클라우드 DB 주소로 변경
+    url: jdbc:mysql://${DB_HOST}:3306/kickboard?serverTimezone=Asia/Seoul
+    username: ${DB_USER}
+    password: ${DB_PASS}
+  jpa:
+    hibernate:
+      ddl-auto: validate # 운영에서는 테이블 자동 생성/수정 방지
+    show-sql: false # 불필요한 로그 방지
+
+springdoc:
+  packages-to-scan: com.kickboard.back.controller
+
+# 사용자 정의 환경 변수 (CORS 허용 도메인)
+app:
+  cors:
+    allowed-origin-patterns: "https://kickdan.com,https://www.kickdan.com,https://*.vercel.app"

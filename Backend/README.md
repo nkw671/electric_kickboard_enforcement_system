@@ -18,16 +18,19 @@
 
 ### 1\. 환경 설정 (MySQL)
 
-로컬 환경에 MySQL 서버가 설치되어 있어야 하며, 아래 정보로 접속 가능해야 합니다.
-(데이터베이스(`kickboard`)와 테이블은 서버 실행 시 `hibernate.ddl-auto=update` 옵션에 의해 자동 생성 및 갱신됩니다.)
+클라우드 운영 환경과 로컬 환경을 분리하여 관리합니다. 로컬 실행 시에는 `src/main/resources/application-local.yml`의 DB 정보를 본인의 로컬 MySQL 정보와 일치시킵니다.
+(서버 실행 시 기본적으로 `local` 프로필이 활성화되어 자동 생성 및 갱신 옵션이 적용됩니다.)
 
-`src/main/resources/application.properties` 확인:
-
-```properties
-spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
-spring.datasource.url=jdbc:mysql://localhost:3306/kickboard?createDatabaseIfNotExist=true&serverTimezone=Asia/Seoul
-spring.datasource.username=root
-spring.datasource.password=본인의_DB_비밀번호
+`application-local.yml` 확인:
+```yaml
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/kickboard?createDatabaseIfNotExist=true&serverTimezone=Asia/Seoul
+    username: root
+    password: 본인의_DB_비밀번호
+app:
+  cors:
+    allowed-origin-patterns: "http://localhost:5173"
 ```
 
 ### 2\. 백엔드 서버 실행 (http://localhost:8080)
@@ -46,6 +49,9 @@ IntelliJ IDEA에서 `BackApplication.java`의 `main` 메서드를 실행하거�
 src/main/java/com/kickboard/back/
 ├── BackApplication.java          # 스프링 부트 앱 시작점
 │
+├── config/                       # 환경 설정 및 글로벌 설정
+│   └── WebConfig.java            # 환경변수 기반 글로벌 CORS 설정
+│
 ├── controller/                   # API 엔드포인트 및 HTTP 요청 처리
 │   └── ViolationRecordController.java
 │
@@ -60,7 +66,9 @@ src/main/java/com/kickboard/back/
 │
 ├── dto/                          # AI, 프론트와 주고받는 데이터 전송 객체
 │   ├── ViolationCreateRequest.java   # AI -> Back 수신용 DTO (유효성 검사 포함)
-│   └── ViolationResponse.java        # Back -> Front 송신용 DTO
+│   ├── ViolationResponse.java        # Back -> Front 송신용 DTO
+│   ├── DashboardStatsResponse.java   # 대시보드 다차원 통계 응답용 DTO
+│   └── ErrorResponse.java            # 프론트엔드 정규화 처리용 공통 에러 응답 DTO
 │
 └── exception/                    # 전역 예외 처리기
     └── GlobalExceptionHandler.java
@@ -113,42 +121,61 @@ AI 서버에서 감지한 위반 데이터를 DB에 저장하고, 연결된 프�
     }
     ```
   * **Response:** `200 OK` "단속 데이터 저장 성공"
-  * **Response:** `400 Bad Request` (필수 데이터가 누락되거나 조건에 맞지 않을 경우 반려 사유 반환)
+  * **Response:** `400 Bad Request` (필수 데이터가 누락되거나 조건에 맞지 않을 경우 정규화된 에러 포맷 반환)
     ```json
     {
-      "type": "위반 유형(type)은 필수 입력값입니다.",
-      "confidence": "신뢰도는 100 이하여야 합니다."
+      "timestamp": "2026-10-10T14:00:00",
+      "status": 400,
+      "errorCode": "VALIDATION_FAILED",
+      "message": "입력값 검증에 실패했습니다. 상세 내역을 확인해주세요.",
+      "errors": {
+        "type": "위반 유형(type)은 필수 입력값입니다.",
+        "confidence": "신뢰도는 100 이하여야 합니다."
+      }
     }
     ```
 
 ### 2\. 단속 기록 조회 (Back -\> Front)
 
-프론트엔드 메인 페이지 및 위반 기록 페이지에서 사용할 위반 목록을 최신순으로 반환합니다. 위반 유형과 카메라 번호를 지정하면 해당 조건의 데이터만 필터링하여 제공합니다.
+프론트엔드 메인 페이지 및 위반 기록 페이지에서 사용할 위반 목록을 페이징 처리하여 반환합니다. 위반 유형과 카메라 번호를 지정하면 해당 조건의 데이터만 필터링하여 제공합니다. 서버 사이드 페이지네이션 메타데이터가 함께 포함됩니다.
 
   * **URL:** `GET /api/violations`
   * **Query Parameter:**
       * `type` (선택): 조회할 위반 유형 (예: `헬멧 미착용`, `인도 주행`). 지정하지 않거나 `전체`로 요청 시 모든 내역 반환.
       * `camera` (선택): 조회할 카메라 구역 (예: `CAM-01`). 지정하지 않거나 `전체`로 요청 시 모든 내역 반환.
-      * `limit` (선택): 가져올 데이터 개수 (기본값: 10)
-      * 예시: `GET /api/violations?type=헬멧 미착용&camera=CAM-01&limit=50`
-  * **Response:**
+      * `page` (선택): 페이지 번호 (0부터 시작, 기본값: 0)
+      * `size` (선택): 한 페이지당 가져올 데이터 개수 (기본값: 10)
+      * 예시: `GET /api/violations?type=헬멧 미착용&camera=CAM-01&page=0&size=5`
+* **Response:**
     ```json
-    [
-      {
-        "id": 1,
-        "type": "인도 주행",
-        "image_url": "https://example.com/images/sidewalk_001.jpg",
-        "camera": "CAM-01",
-        "location": "Zone-1",
-        "confidence": 94,
-        "timestamp": "2025-03-28 14:32:01"
-      }
-    ]
+    {
+      "content": [
+        {
+          "id": 1,
+          "type": "인도 주행",
+          "image_url": "https://example.com/images/sidewalk_001.jpg",
+          "camera": "CAM-01",
+          "location": "Zone-1",
+          "confidence": 94,
+          "timestamp": "2025-03-28 14:32:01"
+        }
+      ],
+      "pageable": {
+        "pageNumber": 0,
+        "pageSize": 5
+      },
+      "last": false,
+      "totalPages": 10,
+      "totalElements": 47,
+      "first": true,
+      "numberOfElements": 5,
+      "empty": false
+    }
     ```
 
 ### 3\. 실시간 통계 조회 (Back -\> Front)
 
-프론트엔드 통계 카드에 표시될 위반 건수를 반환합니다. 필터 파라미터가 없을 경우 전체 누적 통계를, 파라미터가 입력될 경우 해당 기간/구역 내의 통계를 계산하여 반환합니다.
+프론트엔드 대시보드에 표시될 다차원 통계 데이터를 단일 쿼리로 반환합니다. 필터 조건에 맞춰 전체 누적 건수, 시간대별 발생 추이, 위반 다발 구역(TOP 5)을 제공합니다.
 
   * **URL:** `GET /api/stats`
   * **Query Parameter:**
@@ -159,10 +186,32 @@ AI 서버에서 감지한 위반 데이터를 DB에 저장하고, 연결된 프�
   * **Response:**
     ```json
     {
-      "total": 12,
-      "helmet": 7,
-      "sidewalk": 3,
-      "multiRider": 2
+      "overall": {
+        "total": 12,
+        "helmet": 7,
+        "sidewalk": 3,
+        "multiRider": 2
+      },
+      "hourly": [
+        {
+          "hour": 14,
+          "count": 5
+        },
+        {
+          "hour": 15,
+          "count": 7
+        }
+      ],
+      "topLocations": [
+        {
+          "location": "Zone-1",
+          "count": 8
+        },
+        {
+          "location": "Zone-2",
+          "count": 4
+        }
+      ]
     }
     ```
 
@@ -174,11 +223,15 @@ AI 서버에서 감지한 위반 데이터를 DB에 저장하고, 연결된 프�
   * **Response Format:** `text/event-stream`
   * **Event Types:**
       * `connect`: 최초 연결 성공 시 전송되는 텍스트
+      * `ping`: 클라우드 프록시(Nginx 등)의 연결 타임아웃 방지를 위해 30초마다 전송되는 하트비트 더미 데이터
       * `violation`: 새로운 위반 데이터 발생 시 전송되는 단속 객체
     <!-- end list -->
     ```text
     event: connect
     data: 연결 성공
+
+    event: ping
+    data: heartbeat
 
     event: violation
     data: {"id":1, "type":"인도 주행", "image_url":"...", "camera":"CAM-01", "location":"Zone-1", "confidence":94, "timestamp":"2025-03-28 14:32:01"}
