@@ -1,13 +1,14 @@
 import { useState, useRef, useEffect } from 'react'
 import { TYPE_COLOR, FEED_MAX_COUNT } from '../constants'
 import { extractTime, toViolationList } from '../utils'
+import { apiUrl, aiUrl } from '../config'
 import useApi from '../hooks/useApi'
 import useSSE from '../hooks/useSSE'
 import styles from './MainPage.module.css'
 
 function MainPage() {
   // limit(기존)과 size(페이지네이션 적용 후)를 같이 보냄 — 백엔드 머지 후 limit 제거
-  const { data, loading, error, connected } = useApi('/api/violations?limit=10&size=10')
+  const { data, loading, error, connected } = useApi(apiUrl('/api/violations?limit=10&size=10'))
   const violations = toViolationList(data)
 
   const [toast, setToast] = useState(null)
@@ -63,14 +64,11 @@ function MainPage() {
     return () => clearInterval(id)
   }, [])
 
-  const { connected: sseConnected } = useSSE('/api/stream', (violation) => {
+  const { connected: sseConnected } = useSSE(apiUrl('/api/stream'), (violation) => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
     setToast(violation)
     toastTimerRef.current = setTimeout(() => setToast(null), 4000)
   })
-
-  if (error) return <div className={styles.statusError}>서버에 연결할 수 없습니다.</div>
-  if (loading) return <div className={styles.status}>불러오는 중...</div>
 
   // Backend(위반 목록 폴링), AI 영상 스트림, 실시간 알림(SSE) 셋 다 정상일 때만 "정상 작동"으로 표시한다.
   const systemOk = connected && !streamError && sseConnected
@@ -120,7 +118,7 @@ function MainPage() {
           <div className={styles.streamBody}>
             {!streamError ? (
               <img
-                src={`/ai/video/stream?t=${streamKey}`}
+                src={aiUrl(`/video/stream?t=${streamKey}`)}
                 className={styles.stream}
                 alt="stream"
                 onError={handleStreamError}
@@ -163,20 +161,28 @@ function MainPage() {
                 <span className={`${styles.statusBadge} ${styles.statusBadgeWarn}`}>재연결 중</span>
               )}
             </div>
-            <ul className={styles.feedList}>
-              {violations.slice(0, FEED_MAX_COUNT).map((v) => (
-                <li key={v.id} className={styles.feedItem}>
-                  <span
-                    className={styles.feedBadge}
-                    style={{ backgroundColor: TYPE_COLOR[v.type] || '#64748b' }}
-                  >
-                    {v.type}
-                  </span>
-                  <span className={styles.feedCamera}>{v.camera}</span>
-                  <span className={styles.feedTime}>{extractTime(v.timestamp)}</span>
-                </li>
-              ))}
-            </ul>
+            {/* 목록 조회 실패는 이 카드 안에서만 표시한다. 페이지 전체를 에러 화면으로
+                바꾸면 정상인 AI 영상까지 가려지고, 폴링이 한 번만 실패해도 영상이 끊긴다. */}
+            {loading ? (
+              <div className={styles.feedStatus}>불러오는 중...</div>
+            ) : error && violations.length === 0 ? (
+              <div className={styles.feedStatusError}>단속 기록 서버에 연결할 수 없습니다.</div>
+            ) : (
+              <ul className={styles.feedList}>
+                {violations.slice(0, FEED_MAX_COUNT).map((v) => (
+                  <li key={v.id} className={styles.feedItem}>
+                    <span
+                      className={styles.feedBadge}
+                      style={{ backgroundColor: TYPE_COLOR[v.type] || '#64748b' }}
+                    >
+                      {v.type}
+                    </span>
+                    <span className={styles.feedCamera}>{v.camera}</span>
+                    <span className={styles.feedTime}>{extractTime(v.timestamp)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
       </div>

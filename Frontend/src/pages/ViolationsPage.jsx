@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { TYPE_COLOR, BADGE_COLOR, HOVER_COLOR } from '../constants'
 import useApi from '../hooks/useApi'
+import { apiUrl } from '../config'
 import { toViolationList } from '../utils'
 import styles from './ViolationsPage.module.css'
 
@@ -47,6 +48,8 @@ function formatTimestamp(ts) {
 }
 
 const ITEMS_PER_PAGE = 10
+// 페이지 버튼을 5개씩 묶어서 보여준다. 예: « ‹ 11 12 [13] 14 15 › »
+const PAGE_BLOCK = 5
 
 function ViolationsPage() {
   const [filter, setFilter] = useState('전체')
@@ -56,7 +59,7 @@ function ViolationsPage() {
   const [selected, setSelected] = useState(null)
 
   // limit(기존)과 size(페이지네이션 적용 후)를 같이 보냄 — 백엔드 머지 후 limit 제거
-  const { data: apiData, loading, error } = useApi('/api/violations?limit=9999&size=9999')
+  const { data: apiData, loading, error } = useApi(apiUrl('/api/violations?limit=9999&size=9999'))
   const violations = useMemo(() => toViolationList(apiData), [apiData])
 
   // 필터가 바뀌면 페이지를 1로 되돌린다. 렌더 중 조건부 setState로 처리해
@@ -90,10 +93,14 @@ function ViolationsPage() {
   const handleReset = () => { setFilter('전체'); setStartDate(''); setEndDate('') }
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE)
+  const blockStart = Math.floor((page - 1) / PAGE_BLOCK) * PAGE_BLOCK + 1
+  const blockEnd = Math.min(blockStart + PAGE_BLOCK - 1, totalPages)
+  const blockPages = Array.from({ length: blockEnd - blockStart + 1 }, (_, i) => blockStart + i)
   const paginated = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE)
 
   if (loading) return <div className={styles.status}>불러오는 중...</div>
-  if (error) return <div className={styles.statusError}>서버에 연결할 수 없습니다.</div>
+  // 이전 데이터가 있으면 폴링이 한 번 실패해도 목록을 그대로 보여준다.
+  if (error && !apiData) return <div className={styles.statusError}>서버에 연결할 수 없습니다.</div>
 
   return (
     <div className={styles.page}>
@@ -240,8 +247,9 @@ function ViolationsPage() {
 
       {totalPages > 1 && (
         <div className={styles.pagination}>
-          <button className={styles.pageBtn} onClick={() => setPage(p => p - 1)} disabled={page === 1}>←</button>
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+          <button className={styles.pageBtn} onClick={() => setPage(1)} disabled={page === 1} aria-label="첫 페이지">«</button>
+          <button className={styles.pageBtn} onClick={() => setPage(blockStart - PAGE_BLOCK)} disabled={blockStart === 1} aria-label="이전 묶음">‹</button>
+          {blockPages.map(p => (
             <button
               key={p}
               className={`${styles.pageBtn} ${p === page ? styles.pageActive : ''}`}
@@ -250,7 +258,8 @@ function ViolationsPage() {
               {p}
             </button>
           ))}
-          <button className={styles.pageBtn} onClick={() => setPage(p => p + 1)} disabled={page === totalPages}>→</button>
+          <button className={styles.pageBtn} onClick={() => setPage(blockStart + PAGE_BLOCK)} disabled={blockEnd === totalPages} aria-label="다음 묶음">›</button>
+          <button className={styles.pageBtn} onClick={() => setPage(totalPages)} disabled={page === totalPages} aria-label="마지막 페이지">»</button>
         </div>
       )}
 

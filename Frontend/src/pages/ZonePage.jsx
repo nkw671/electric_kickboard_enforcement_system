@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { aiUrl } from '../config'
 import styles from './ZonePage.module.css'
 
 // 스트림이 로드되기 전(미연결 등) 사용할 기본 해상도. 연결되면 영상 실제 해상도로 자동 교체된다.
@@ -32,15 +33,33 @@ function ZonePage() {
   const [streamError, setStreamError] = useState(false)
   const [videoDims, setVideoDims] = useState({ w: DEFAULT_W, h: DEFAULT_H })
 
+  // AI 서버(vast.ai)는 필요할 때만 켜두므로, 연결될 때까지 5초마다 다시 시도한다.
+  // 연결되면 영상 스트림 에러 상태도 풀어서 영상을 다시 불러온다.
   useEffect(() => {
-    fetch('/ai/zones')
-      .then(r => r.json())
-      .then(data => {
-        setZones(data.zones || [])
-        setAiConnected(true)
-      })
-      .catch(() => setAiConnected(false))
-  }, [])
+    if (aiConnected) return
+    let cancelled = false
+    const load = () => {
+      fetch(aiUrl('/zones'))
+        .then(r => {
+          if (!r.ok) throw new Error(`HTTP ${r.status}`)
+          return r.json()
+        })
+        .then(data => {
+          if (cancelled) return
+          // 연결 전에 그려둔(아직 저장 안 한) 구역이 있으면 덮어쓰지 않는다.
+          setZones(prev => (prev.length ? prev : data.zones || []))
+          setStreamError(false)
+          setAiConnected(true)
+        })
+        .catch(() => {})
+    }
+    load()
+    const timer = setInterval(load, 5000)
+    return () => {
+      cancelled = true
+      clearInterval(timer)
+    }
+  }, [aiConnected])
 
   // 영상 스트림의 실제 해상도(naturalWidth/Height)를 폴링하여 좌표계를 영상에 맞춘다.
   // AI(detection.py INFER_SIZE)가 어떤 해상도를 쓰든 자동으로 일치하므로 하드코딩이 불필요하다.
@@ -153,7 +172,7 @@ function ZonePage() {
 
   const saveZones = async () => {
     try {
-      const res = await fetch('/ai/zones', {
+      const res = await fetch(aiUrl('/zones'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ zones: zones.map(z => ({ name: z.name, pts: z.pts, color: z.color })) }),
@@ -168,7 +187,8 @@ function ZonePage() {
 
   const deleteAllZones = async () => {
     try {
-      await fetch('/ai/zones', { method: 'DELETE' })
+      const res = await fetch(aiUrl('/zones'), { method: 'DELETE' })
+      if (!res.ok) throw new Error()
       setZones([])
       setStatus({ ok: true, msg: '전체 삭제 완료' })
     } catch {
@@ -193,15 +213,19 @@ function ZonePage() {
             {aiConnected && !streamError ? (
               <img
                 ref={imgRef}
-                src="/ai/video/stream"
+                src={aiUrl('/video/stream')}
                 className={styles.canvasVideo}
                 alt="stream"
-                onError={() => setStreamError(true)}
+                onError={() => {
+                  // 스트림이 끊기면 연결 끊김으로 보고 위의 재시도 루프를 다시 돌린다.
+                  setStreamError(true)
+                  setAiConnected(false)
+                }}
               />
             ) : (
               <div className={styles.canvasPlaceholder}>
                 AI 서버 연결 후 활성화
-                <small>(http://localhost:8000)</small>
+                <small>AI 서버가 켜지면 자동으로 다시 연결됩니다</small>
               </div>
             )}
             <canvas
