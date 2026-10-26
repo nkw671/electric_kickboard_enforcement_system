@@ -141,7 +141,9 @@ function StatsPage() {
               </div>
               <ResponsiveContainer width="100%" height={110} style={{ marginTop: '-8px' }}>
                 <PieChart>
-                  <Pie data={typeData} cx="50%" cy="50%" innerRadius={34} outerRadius={55} paddingAngle={3} dataKey="value">
+                  {/* 애니메이션을 끔: recharts Pie는 다시 렌더링될 때마다(3초 폴링 등) 애니메이션을
+                      처음부터 다시 시작해서, 타이밍에 따라 몇 초 동안 빈 차트로 보이는 문제가 있었음 */}
+                  <Pie data={typeData} cx="50%" cy="50%" innerRadius={34} outerRadius={55} paddingAngle={3} dataKey="value" isAnimationActive={false}>
                     {typeData.map(({ name }) => (
                       <Cell key={name} fill={TYPE_CONFIG[name].color} />
                     ))}
