@@ -24,19 +24,19 @@
 .header {
   display: flex;
   flex-direction: column;
-  /* 제목·설명 위치를 구역 설정 페이지와 맞춤 (padding 16px + 페이지 gap 20px = 36px) */
-  margin-bottom: 36px;
+  /* 제목·설명 위치를 다른 페이지와 맞춤 (설명 아래 여백 19px) */
+  margin-bottom: 19px;
 }
 
 .desc {
-  margin: 8px 0 0;
-  font-size: 14px;
-  line-height: 1.6;
+  margin: 13px 0 0;
+  font-size: 15px;
+  line-height: 1.5;
   color: #64748b;
 }
 
 .title {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 700;
   color: #0f172a;
   margin: 0;
@@ -77,7 +77,7 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
 }
 
 .summaryCardLabel {
@@ -127,7 +127,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
 }
 
 .chartCardHeader {

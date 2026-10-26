@@ -97,9 +97,7 @@ function StatsPage() {
       <div className={styles.header}>
         <h2 className={styles.title}>단속 통계</h2>
         <p className={styles.desc}>
-          누적 단속 기록을 위반 유형별·시간대별로 집계합니다.
-          <br />
-          위반이 많은 시간대를 확인해 집중 단속 시간을 정하는 데 활용할 수 있습니다.
+          누적 단속 기록을 위반 유형 및 시간대별로 분석합니다.
         </p>
       </div>
 

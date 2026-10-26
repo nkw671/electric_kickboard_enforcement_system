@@ -23,7 +23,7 @@
 .header {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 19px;
   padding-bottom: 16px;
   border-bottom: 1px solid #e2e8f0;
 }
@@ -126,22 +126,21 @@
   color: #374151;
 }
 
-/* 제목·설명 위치를 구역 설정 페이지와 맞춤 (설명 아래 여백 = 16px + header gap 20px = 36px) */
+/* 제목·설명 위치를 다른 페이지와 맞춤 (설명 아래 여백 = header gap 19px) */
 .titleRow {
   display: flex;
   flex-direction: column;
-  margin-bottom: 16px;
 }
 
 .desc {
-  margin: 8px 0 0;
-  font-size: 14px;
-  line-height: 1.6;
+  margin: 13px 0 0;
+  font-size: 15px;
+  line-height: 1.5;
   color: #64748b;
 }
 
 .title {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 700;
   color: #0f172a;
   margin: 0;

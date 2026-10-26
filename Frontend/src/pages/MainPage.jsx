@@ -95,8 +95,6 @@ function MainPage() {
         <h2 className={styles.pageTitle}>실시간 위반 감지 모니터링</h2>
         <p className={styles.desc}>
           AI가 단속 카메라 영상을 실시간으로 분석해 헬멧 미착용·다인 탑승·인도 주행을 감지합니다.
-          <br />
-          위반이 감지되면 알림과 함께 오른쪽 목록에 바로 추가됩니다.
         </p>
       </div>
       <div className={styles.contentGrid}>
