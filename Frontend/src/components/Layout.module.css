@@ -30,12 +30,27 @@
   flex-shrink: 0;
 }
 
+/* 로고 글씨는 index.html에서 불러오는 손글씨 폰트(Gaegu). 못 불러오면 기본 글꼴로 표시됨 */
 .brandName {
-  font-size: 24px;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Gaegu', 'Malgun Gothic', sans-serif;
   font-weight: 700;
   color: #0f172a;
-  line-height: 1.4;
-  white-space: normal;
+  white-space: nowrap;
+}
+
+.brandTitle {
+  font-size: 40px;
+  line-height: 1;
+  letter-spacing: 1px;
+}
+
+.brandSub {
+  font-size: 19px;
+  line-height: 1.2;
+  letter-spacing: -1px;
+  margin-top: 4px;
 }
 
 .nav {
