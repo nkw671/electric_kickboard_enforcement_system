@@ -146,11 +146,15 @@
   margin: 0;
 }
 
-.countBadge {
-  font-size: 16px;
-  font-weight: 600;
+.countText {
+  margin: 0 0 -8px;
+  font-size: 13px;
   color: #64748b;
-  margin-bottom: -8px;
+}
+
+.countText strong {
+  font-weight: 700;
+  color: #0f172a;
 }
 
 .filterDivider {
@@ -214,76 +218,112 @@
   border-color: var(--hover-border, #e2e8f0);
 }
 
+/* 선택된 '전체' 버튼: 다른 필터 버튼과 같은 톤(연한 회색) */
 .filterBtn.active {
-  background-color: #0f172a;
-  border-color: #0f172a;
-  color: #ffffff;
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #0f172a;
+  font-weight: 600;
 }
 
-/* 카드 리스트 */
-.cardList {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.card {
+/* 단속 기록 표 */
+.tableWrap {
   background-color: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
   overflow: hidden;
-  transition: box-shadow 0.15s, background-color 0.15s;
-  cursor: pointer;
 }
 
-.card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  background-color: #f8fafc;
-}
-
-.cardTop {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 18px 20px 12px;
-}
-
-.cardId {
-  font-size: 15px;
-  color: #94a3b8;
-  font-weight: 600;
-}
-
-.cardBody {
-  padding: 0 20px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.cardRow {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 15px;
-}
-
-.cardLabel {
-  color: #94a3b8;
+.table {
+  width: 100%;
+  border-collapse: collapse;
   font-size: 14px;
-  font-weight: 600;
-  min-width: 48px;
 }
 
-.cardValue {
-  color: #0f172a;
+.table th {
+  padding: 11px 16px;
+  background-color: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+  white-space: nowrap;
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.row {
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.row:hover,
+.row:focus-visible {
+  background-color: #f8fafc;
+  outline: none;
+}
+
+.colId {
+  width: 72px;
+}
+
+.table .colNum {
+  text-align: right;
+}
+
+.colAction {
+  width: 110px;
+  text-align: right;
+}
+
+.cellId {
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.cellStrong {
+  font-weight: 600;
+  color: #334155;
+}
+
+.cellMuted {
+  color: #64748b;
+}
+
+.viewLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #94a3b8;
+  transition: color 0.15s;
+}
+
+.viewLink svg {
+  width: 14px;
+  height: 14px;
+}
+
+.row:hover .viewLink,
+.row:focus-visible .viewLink {
+  color: #2563eb;
 }
 
 .badge {
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 14px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 13px;
   font-weight: 600;
 }
 

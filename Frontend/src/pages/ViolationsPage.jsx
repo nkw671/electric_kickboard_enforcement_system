@@ -221,32 +221,57 @@ function ViolationsPage() {
         </div>
       </div>
 
-      <span className={styles.countBadge}>{filtered.length}건</span>
+      <p className={styles.countText}>총 <strong>{filtered.length}</strong>건의 기록</p>
 
-      <div className={styles.cardList}>
+      {/* 한 화면에 10건이 다 보이도록 표로 표시. 행을 누르면(또는 Enter) 상세 팝업 */}
+      <div className={styles.tableWrap}>
         {paginated.length === 0 ? (
           <div className={styles.status}>해당 조건의 위반 기록이 없습니다.</div>
         ) : (
-          paginated.map((v) => (
-            <div key={v.id} className={styles.card} onClick={() => setSelected(v)}>
-              <div className={styles.cardTop}>
-                <span className={styles.badge} style={{ backgroundColor: BADGE_COLOR[v.type]?.bg || '#f1f5f9', color: BADGE_COLOR[v.type]?.text || '#475569' }}>
-                  {v.type}
-                </span>
-                <span className={styles.cardId}>#{v.id}</span>
-              </div>
-              <div className={styles.cardBody}>
-                <div className={styles.cardRow}>
-                  <span className={styles.cardLabel}>카메라</span>
-                  <span className={styles.cardValue}>{v.camera}</span>
-                </div>
-                <div className={styles.cardRow}>
-                  <span className={styles.cardLabel}>일시</span>
-                  <span className={styles.cardValue}>{v.timestamp}</span>
-                </div>
-              </div>
-            </div>
-          ))
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th className={styles.colId}>ID</th>
+                <th>위반 유형</th>
+                <th>카메라</th>
+                <th>위치</th>
+                <th>단속 일시</th>
+                <th className={styles.colNum}>신뢰도</th>
+                <th className={styles.colAction} aria-label="상세" />
+              </tr>
+            </thead>
+            <tbody>
+              {paginated.map((v) => (
+                <tr
+                  key={v.id}
+                  className={styles.row}
+                  onClick={() => setSelected(v)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') setSelected(v) }}
+                  tabIndex={0}
+                >
+                  <td className={styles.cellId}>#{v.id}</td>
+                  <td>
+                    <span className={styles.badge} style={{ backgroundColor: BADGE_COLOR[v.type]?.bg || '#f1f5f9', color: BADGE_COLOR[v.type]?.text || '#475569' }}>
+                      {v.type}
+                    </span>
+                  </td>
+                  <td className={styles.cellStrong}>{v.camera}</td>
+                  <td className={styles.cellMuted}>{v.location || '—'}</td>
+                  <td className={styles.cellMuted}>{v.timestamp}</td>
+                  <td className={`${styles.cellMuted} ${styles.colNum}`}>{v.confidence}%</td>
+                  <td className={styles.colAction}>
+                    <span className={styles.viewLink}>
+                      캡처 보기
+                      {/* Lucide: chevron-right */}
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="m9 18 6-6-6-6" />
+                      </svg>
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
 
