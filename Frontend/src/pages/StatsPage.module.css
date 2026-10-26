@@ -86,35 +86,44 @@
   gap: 6px;
   font-size: 17px;
   font-weight: 500;
-  color: #64748b;
+  color: #334155;
 }
 
-.summaryIcon {
+.summaryCardLabel {
+  gap: 8px;
+}
+
+/* 아이콘을 연한 틴트 배경 상자로 감쌈 (전체 단속은 회색, 유형별은 유형 색) */
+.summaryIconBox {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+.summaryIconBox svg {
   width: 16px;
   height: 16px;
-  flex-shrink: 0;
-}
-
-.summaryTypeIcon {
-  display: flex;
-}
-
-.summaryCardLabel svg {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
 }
 
 .summaryVal {
-  font-size: 23px;
-  font-weight: 700;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
   color: #0f172a;
   line-height: 1;
-  margin-top: 2px;
+  margin-top: 8px;
 }
 
 .summaryUnit {
+  margin-left: 2px;
   font-size: 13px;
+  font-weight: 500;
   color: #64748b;
 }
 
@@ -134,6 +143,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  /* 카드 제목 ↔ 내용 여백 20px (카드 gap 12px + 8px) */
+  margin-bottom: 8px;
   font-size: 15px;
   font-weight: 600;
   color: #374151;
@@ -147,18 +158,170 @@
 }
 
 /* 파이차트 범례 */
+/* 위반 유형 분포 7 : 인도 주행 많은 구역 5, 두 카드 높이를 같게 */
+.chartRow {
+  display: grid;
+  grid-template-columns: 7fr 5fr;
+  gap: 20px;
+  align-items: stretch;
+}
+
+.pieCard,
+.topCard {
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.chartCardMeta {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+/* 도넛(왼쪽) + 범례 목록(오른쪽) */
+.pieBody {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  gap: 24px;
+  padding: 4px 0;
+}
+
+/* 인도 주행 많은 구역 TOP 5 */
+.topList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.topItem {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.topRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.topRank {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  background-color: #f1f5f9;
+  color: #94a3b8;
+}
+
+.topRankHigh {
+  background-color: #0f172a;
+  color: #ffffff;
+}
+
+.topName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  color: #334155;
+}
+
+.topCount {
+  flex-shrink: 0;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.topUnit {
+  margin-left: 2px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.topBarTrack {
+  height: 6px;
+  border-radius: 9999px;
+  background-color: #f1f5f9;
+  overflow: hidden;
+}
+
+.topBar {
+  height: 100%;
+  border-radius: 9999px;
+  background-color: #cbd5e1;
+}
+
+.topBarFirst {
+  background-color: #2563eb;
+}
+
+.topEmpty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.pieWrap {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  flex-shrink: 0;
+}
+
+.pieCenter {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.pieCenterVal {
+  font-size: 26px;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.1;
+}
+
+.pieCenterLabel {
+  font-size: 12px;
+  color: #64748b;
+}
+
 .pieLegend {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-top: -6px;
+  gap: 12px;
+  width: 220px;
 }
 
 .pieLegendRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 12px;
+  gap: 16px;
+  font-size: 14px;
 }
 
 .pieLegendLeft {
@@ -175,12 +338,18 @@
 }
 
 .pieLegendName {
-  color: #64748b;
+  color: #334155;
 }
 
 .pieLegendVal {
   font-weight: 600;
   color: #0f172a;
+}
+
+@media (max-width: 1024px) {
+  .chartRow {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 768px) {
