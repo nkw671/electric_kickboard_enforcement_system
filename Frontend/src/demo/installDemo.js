@@ -13,6 +13,8 @@ const CAMERAS = [
   { camera: 'CAM-01', location: '정문 앞 인도' },
   { camera: 'CAM-02', location: '학생회관 앞 사거리' },
   { camera: 'CAM-03', location: '도서관 옆 보행로' },
+  { camera: 'CAM-04', location: '공학관 앞 횡단보도' },
+  { camera: 'CAM-05', location: '기숙사 입구' },
 ]
 const INITIAL_COUNT = 240
 const INITIAL_DAYS = 7
@@ -63,7 +65,8 @@ function makeViolation(date) {
     id: nextId++,
     type,
     camera,
-    location,
+    // 실제 AI처럼 인도 주행에만 location(구역 이름)을 넣고, 나머지 위반은 빈 문자열
+    location: type === '인도 주행' ? location : '',
     timestamp,
     confidence: 70 + Math.floor(random() * 29),
     image_url: snapshotUrl(type, camera, timestamp),
@@ -79,7 +82,8 @@ const violations = (() => {
     const d = new Date(now - Math.floor(random() * INITIAL_DAYS) * 86400000)
     d.setHours(random() < 0.75 ? pick(BUSY_HOURS) : Math.floor(random() * 24),
       Math.floor(random() * 60), Math.floor(random() * 60))
-    if (d.getTime() > now) d.setTime(now - Math.floor(random() * 3600000))
+    // 아직 오지 않은 시각이면 하루 전 같은 시각으로 (지금 시간대에 기록이 몰리지 않게)
+    if (d.getTime() > now) d.setDate(d.getDate() - 1)
     list.push(d)
   }
   list.sort((a, b) => a - b)
@@ -110,6 +114,7 @@ function statsResponse() {
   const byLocation = {}
   violations.forEach(v => {
     hourly[Number(v.timestamp.slice(11, 13))].count++
+    // 실제 백엔드처럼 location 그대로 묶음(빈 문자열도 포함 — 화면에서 걸러냄)
     byLocation[v.location] = (byLocation[v.location] || 0) + 1
   })
   return {
