@@ -243,7 +243,6 @@ function StatsPage() {
                   <circle cx="12" cy="10" r="3"/>
                 </svg>
                 인도 주행 많은 구역 TOP 5
-                <span className={styles.chartCardMeta}>구역 설정 기준</span>
               </div>
               {topLocations.length === 0 ? (
                 <div className={styles.topEmpty}>인도 주행이 감지된 구역이 없습니다.</div>

@@ -202,7 +202,7 @@
 .topItem {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 7px;
 }
 
 .topRow {
@@ -212,23 +212,20 @@
   font-size: 13px;
 }
 
+/* 순위: 상자 없이 숫자만. 폭을 고정해 구역 이름 시작 위치를 맞춤. 1~3위는 진하게, 4~5위는 연하게 */
 .topRank {
-  width: 18px;
-  height: 18px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 14px;
   flex-shrink: 0;
-  font-size: 11px;
-  font-weight: 700;
-  background-color: #f1f5f9;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
   color: #94a3b8;
+  font-variant-numeric: tabular-nums;
 }
 
 .topRankHigh {
-  background-color: #0f172a;
-  color: #ffffff;
+  font-weight: 700;
+  color: #0f172a;
 }
 
 .topName {
