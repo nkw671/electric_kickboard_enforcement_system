@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: back
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/kickboard?createDatabaseIfNotExist=true&serverTimezone=Asia/Seoul
+    username: root
+    password: root
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+springdoc:
+  packages-to-scan: com.kickboard.back.controller
+
+# 사용자 정의 환경 변수 (CORS 허용 도메인)
+app:
+  cors:
+    allowed-origin-patterns: "http://localhost:5173"
