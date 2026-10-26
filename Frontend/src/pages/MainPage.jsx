@@ -12,7 +12,15 @@ function MainPage() {
   const violations = toViolationList(data)
 
   const [toast, setToast] = useState(null)
+  const [toastLeaving, setToastLeaving] = useState(false)
   const toastTimerRef = useRef(null)
+
+  // 토스트 닫기: 아래로 사라지는 애니메이션(0.25초)이 끝난 뒤 제거
+  const dismissToast = () => {
+    clearTimeout(toastTimerRef.current)
+    setToastLeaving(true)
+    toastTimerRef.current = setTimeout(() => setToast(null), 250)
+  }
   const [currentTime, setCurrentTime] = useState('')
   const [streamError, setStreamError] = useState(false)
   const [streamKey, setStreamKey] = useState(0)
@@ -65,9 +73,11 @@ function MainPage() {
   }, [])
 
   const { connected: sseConnected } = useSSE(apiUrl('/api/stream'), (violation) => {
-    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+    clearTimeout(toastTimerRef.current)
     setToast(violation)
-    toastTimerRef.current = setTimeout(() => setToast(null), 4000)
+    setToastLeaving(false)
+    // 4초 뒤 자동으로 사라짐 (X 버튼으로 바로 닫을 수도 있음)
+    toastTimerRef.current = setTimeout(dismissToast, 4000)
   })
 
   // Backend(위반 목록 폴링), AI 영상 스트림, 실시간 알림(SSE) 셋 다 정상일 때만 "정상 작동"으로 표시한다.
@@ -76,18 +86,42 @@ function MainPage() {
   return (
     <div className={styles.page}>
       {toast && (
-        <div className={styles.toast}>
-          <span className={styles.toastLabel}>새 위반 감지</span>
-          <div className={styles.toastContent}>
-            <span
-              className={styles.toastBadge}
-              style={{ backgroundColor: BADGE_COLOR[toast.type]?.bg || '#f1f5f9', color: BADGE_COLOR[toast.type]?.text || '#475569' }}
-            >
-              {toast.type}
-            </span>
-            <span className={styles.toastCamera}>{toast.camera}</span>
-            <span className={styles.toastConf}>{toast.confidence}%</span>
+        // 화면 우측 하단 고정. 아이콘 색은 위반 유형 색을 따름
+        <div className={`${styles.toast} ${toastLeaving ? styles.toastLeaving : ''}`} role="status">
+          <div
+            className={styles.toastIcon}
+            style={{ backgroundColor: BADGE_COLOR[toast.type]?.bg || '#f1f5f9', color: BADGE_COLOR[toast.type]?.text || '#475569' }}
+          >
+            {/* Lucide: triangle-alert */}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
+              <path d="M12 9v4" />
+              <path d="M12 17h.01" />
+            </svg>
           </div>
+          <div className={styles.toastBody}>
+            <div className={styles.toastTop}>
+              <span className={styles.toastLabel}>새 위반 감지</span>
+              <span className={styles.toastTime}>방금 전</span>
+            </div>
+            <div className={styles.toastContent}>
+              <span
+                className={styles.toastBadge}
+                style={{ backgroundColor: BADGE_COLOR[toast.type]?.bg || '#f1f5f9', color: BADGE_COLOR[toast.type]?.text || '#475569' }}
+              >
+                {toast.type}
+              </span>
+              <span className={styles.toastCamera}>{toast.camera}</span>
+              <span className={styles.toastConf}>신뢰도 {toast.confidence}%</span>
+            </div>
+          </div>
+          <button className={styles.toastClose} onClick={dismissToast} aria-label="알림 닫기">
+            {/* Lucide: x */}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
         </div>
       )}
 

@@ -292,34 +292,98 @@
 }
 
 /* 토스트 알림 */
+/* 새 위반 토스트: 다른 카드를 가리지 않게 화면 우측 하단에 고정 */
 .toast {
   position: fixed;
-  top: 80px;
+  bottom: 24px;
   right: 24px;
-  background-color: #ffffff;
-  border: 1px solid #e8ecf3;
-  border-radius: 8px;
-  padding: 14px 18px;
-  box-shadow: 0 4px 20px rgba(0, 20, 60, 0.12);
   z-index: 300;
-  min-width: 240px;
+  min-width: 340px;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
-  animation: slideIn 0.2s ease;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background-color: #ffffff;
+  border: 1px solid #f1f5f9;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px -8px rgba(15, 23, 42, 0.22), 0 4px 12px rgba(15, 23, 42, 0.08);
+  animation: slideUp 0.25s ease;
 }
 
-@keyframes slideIn {
-  from { transform: translateX(110%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+@keyframes slideUp {
+  from { transform: translateY(16px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* 닫힐 때 아래로 스르륵 사라짐 */
+.toastLeaving {
+  animation: slideDown 0.25s ease forwards;
+}
+
+@keyframes slideDown {
+  to { transform: translateY(16px); opacity: 0; }
+}
+
+.toastClose {
+  align-self: flex-start;
+  display: flex;
+  padding: 2px;
+  margin: -4px -6px 0 0;
+  border: none;
+  background: none;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.toastClose:hover {
+  color: #64748b;
+}
+
+.toastClose svg {
+  width: 16px;
+  height: 16px;
+}
+
+.toastIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.toastIcon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.toastBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.toastTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.toastTime {
+  font-size: 11px;
+  font-weight: 500;
+  color: #94a3b8;
 }
 
 .toastLabel {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
-  color: #8a9bb5;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  color: #0f172a;
+  letter-spacing: 0.2px;
 }
 
 .toastContent {
@@ -337,15 +401,16 @@
 }
 
 .toastCamera {
-  font-size: 15px;
-  color: #1a2744;
-  font-weight: 600;
+  font-size: 14px;
+  color: #1e293b;
+  font-weight: 700;
 }
 
 .toastConf {
   margin-left: auto;
-  font-size: 14px;
-  color: #8a9bb5;
+  font-size: 11px;
+  color: #94a3b8;
+  white-space: nowrap;
 }
 
 /* 실시간 피드 카드 안에서만 보여주는 로딩/에러 상태 */
