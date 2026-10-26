@@ -1,9 +1,82 @@
-import { useState, useEffect, useMemo } from 'react'
-import { BADGE_COLOR, HOVER_COLOR } from '../constants'
+import { useState, useEffect, useMemo, useRef } from 'react'
+import { TYPE_COLOR, BADGE_COLOR } from '../constants'
 import useApi from '../hooks/useApi'
 import { apiUrl } from '../config'
 import { toViolationList } from '../utils'
 import styles from './ViolationsPage.module.css'
+
+// 필터 탭 순서 (통계 페이지와 같은 순서, 전체를 맨 앞)
+const FILTER_TYPES = ['전체', '헬멧 미착용', '다인 탑승', '인도 주행']
+
+// 로컬 기준 n일 전 날짜를 "YYYY-MM-DD"로 (toISOString은 UTC라 자정 근처에 날짜가 밀림)
+function daysAgo(n) {
+  const d = new Date()
+  d.setDate(d.getDate() - n)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+// 빠른 기간 선택: [시작 n일 전, 끝 0일 전]. 전체는 날짜 조건 없음
+const DATE_PRESETS = [
+  { label: '전체 기간', range: null },
+  { label: '오늘', range: [0, 0] },
+  { label: '7일', range: [6, 0] },
+  { label: '1개월', range: [29, 0] },
+]
+
+// 브라우저 달력 팝업 열기. 입력칸에 포커스를 먼저 줘서, 달력이 열린 동안을 포커스로 알 수 있게 한다.
+// 지원하지 않거나 막히면(사용자 클릭이 아닌 경우 등) 포커스만 남는다.
+function openPicker(input) {
+  if (!input) return
+  input.focus()
+  try {
+    input.showPicker()
+  } catch {
+    // 포커스만 유지
+  }
+}
+
+// 날짜 한 칸: "2026.10.20"처럼 글자로 보여주고, 누르면 숨겨둔 date 입력의 달력을 연다.
+// 고른 날짜가 없으면 fallback(실제 데이터의 첫/마지막 기록 날짜)을 연하게 보여준다.
+// 평소엔 글자만, 마우스를 올리면 연한 배경, 이 칸의 달력이 열려 있는 동안은 진한 배경.
+// 브라우저 달력은 닫힘 신호가 없어서, 날짜를 고르거나 Esc·다른 곳 클릭(포커스 해제) 때 표시를 끈다.
+function DateField({ value, fallback, min, max, onChange, label, buttonRef }) {
+  const inputRef = useRef(null)
+  const [open, setOpen] = useState(false)
+  const shown = value || fallback
+  return (
+    <span className={styles.dateField}>
+      <button
+        ref={buttonRef}
+        type="button"
+        className={`${styles.dateText} ${open ? styles.dateTextOpen : ''}`}
+        onClick={() => {
+          setOpen(true)
+          openPicker(inputRef.current)
+        }}
+        aria-label={`${label}: ${shown || '선택 안 함'}`}
+        aria-expanded={open}
+      >
+        {shown ? shown.replaceAll('-', '.') : '날짜 선택'}
+      </button>
+      <input
+        ref={inputRef}
+        type="date"
+        className={styles.dateHidden}
+        value={value}
+        min={min}
+        max={max}
+        onChange={e => {
+          onChange(e.target.value)
+          e.target.blur()
+        }}
+        onBlur={() => setOpen(false)}
+        onKeyDown={e => { if (e.key === 'Escape') e.currentTarget.blur() }}
+        tabIndex={-1}
+        aria-hidden="true"
+      />
+    </span>
+  )
+}
 
 const MODAL_BADGE = {
   '헬멧 미착용': { bg: '#fef3c7', text: '#b45309', border: '#fde68a' },
@@ -63,6 +136,13 @@ function ViolationsPage() {
   // limit(기존)과 size(페이지네이션 적용 후)를 같이 보냄 — 백엔드 머지 후 limit 제거
   const { data: apiData, loading, error } = useApi(apiUrl('/api/violations?limit=9999&size=9999'))
   const violations = useMemo(() => toViolationList(apiData), [apiData])
+  // 달력 아이콘을 눌러도 시작 날짜 달력이 열리도록 (시작 날짜 버튼을 대신 눌러줌)
+  const startButtonRef = useRef(null)
+  // 날짜를 고르지 않았을 때 날짜 칸에 보여줄 실제 데이터 범위(첫 기록 ~ 마지막 기록)
+  const dataRange = useMemo(() => {
+    const days = violations.map(v => v.timestamp.slice(0, 10)).sort()
+    return { first: days[0] ?? '', last: days[days.length - 1] ?? '' }
+  }, [violations])
 
   // 필터가 바뀌면 페이지를 1로 되돌린다. 렌더 중 조건부 setState로 처리해
   // effect 안에서 setState를 호출하지 않도록 함(cascading render 방지).
@@ -92,6 +172,15 @@ function ViolationsPage() {
   }, [violations, filter, startDate, endDate])
 
   const isFiltered = filter !== '전체' || startDate !== '' || endDate !== ''
+
+  const applyPreset = (range) => {
+    setStartDate(range ? daysAgo(range[0]) : '')
+    setEndDate(range ? daysAgo(range[1]) : '')
+  }
+  // 지금 날짜 조건이 어느 프리셋과 같은지 (직접 고른 기간이면 없음)
+  const activePreset = DATE_PRESETS.find(({ range }) =>
+    range ? startDate === daysAgo(range[0]) && endDate === daysAgo(range[1]) : !startDate && !endDate
+  )?.label
   const handleReset = () => { setFilter('전체'); setStartDate(''); setEndDate('') }
 
   const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE)
@@ -114,114 +203,86 @@ function ViolationsPage() {
           </p>
         </div>
 
-        <div className={styles.filterPanel}>
-          {/* 패널 헤더 */}
-          <div className={styles.filterPanelHeader}>
-            <div className={styles.filterPanelTitle}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="21" y1="4" x2="14" y2="4"/><line x1="10" y1="4" x2="3" y2="4"/>
-                <line x1="21" y1="12" x2="12" y2="12"/><line x1="8" y1="12" x2="3" y2="12"/>
-                <line x1="21" y1="20" x2="16" y2="20"/><line x1="12" y1="20" x2="3" y2="20"/>
-                <line x1="14" y1="2" x2="14" y2="6"/>
-                <line x1="8" y1="10" x2="8" y2="14"/>
-                <line x1="16" y1="18" x2="16" y2="22"/>
-              </svg>
-              필터
+        {/* 한 줄 툴바: 왼쪽 날짜·위반 유형 / 오른쪽 초기화·건수 */}
+        <div className={styles.toolbar}>
+          <div className={styles.toolbarLeft}>
+            <div className={styles.dateRange}>
+              <button
+                type="button"
+                className={styles.dateIconBtn}
+                onClick={() => startButtonRef.current?.click()}
+                aria-label="시작 날짜 달력 열기"
+              >
+                {/* Lucide: calendar */}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M8 2v4" /><path d="M16 2v4" />
+                  <rect width="18" height="18" x="3" y="4" rx="2" />
+                  <path d="M3 10h18" />
+                </svg>
+              </button>
+              <DateField
+                buttonRef={startButtonRef}
+                value={startDate}
+                fallback={dataRange.first}
+                max={endDate || undefined}
+                onChange={setStartDate}
+                label="시작 날짜"
+              />
+              <span className={styles.dateSep}>~</span>
+              <DateField
+                value={endDate}
+                fallback={dataRange.last}
+                min={startDate || undefined}
+                onChange={setEndDate}
+                label="끝 날짜"
+              />
             </div>
+
+            {/* 빠른 기간 선택 */}
+            <div className={styles.segment} role="group" aria-label="기간">
+              {DATE_PRESETS.map(({ label, range }) => (
+                <button
+                  key={label}
+                  className={`${styles.segBtn} ${activePreset === label ? styles.segActive : ''}`}
+                  aria-pressed={activePreset === label}
+                  onClick={() => applyPreset(range)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* 위반 유형: 전체를 맨 앞에 둔 세그먼트 탭 */}
+            <div className={styles.segment} role="group" aria-label="위반 유형">
+              {FILTER_TYPES.map((t) => (
+                <button
+                  key={t}
+                  className={`${styles.segBtn} ${filter === t ? styles.segActive : ''}`}
+                  aria-pressed={filter === t}
+                  onClick={() => setFilter(t)}
+                >
+                  {t !== '전체' && <span className={styles.segDot} style={{ backgroundColor: TYPE_COLOR[t] }} />}
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className={styles.toolbarRight}>
             {isFiltered && (
               <button className={styles.resetBtn} onClick={handleReset}>
+                {/* Lucide: rotate-ccw */}
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                  <path d="M3 3v5h5" />
                 </svg>
                 초기화
               </button>
             )}
-          </div>
-
-          {/* 날짜 필터 */}
-          <div className={styles.filterRow}>
-            <span className={styles.filterLabel}>날짜</span>
-            <div className={styles.dateFilterRow}>
-              <input
-                type="date"
-                className={styles.dateInput}
-                value={startDate}
-                onChange={e => setStartDate(e.target.value)}
-              />
-              <span className={styles.dateSep}>~</span>
-              <input
-                type="date"
-                className={styles.dateInput}
-                value={endDate}
-                min={startDate}
-                onChange={e => setEndDate(e.target.value)}
-              />
-            </div>
-          </div>
-
-          {/* 위반 유형 필터 */}
-          <div className={styles.filterRow}>
-            <span className={styles.filterLabel}>위반 유형</span>
-            <div className={styles.filterGroup}>
-              <button
-                className={`${styles.filterBtn} ${filter === '헬멧 미착용' ? styles.active : ''}`}
-                style={filter === '헬멧 미착용'
-                  ? { backgroundColor: BADGE_COLOR['헬멧 미착용'].bg, borderColor: HOVER_COLOR['헬멧 미착용'].border, color: BADGE_COLOR['헬멧 미착용'].text }
-                  : { '--hover-bg': HOVER_COLOR['헬멧 미착용'].bg, '--hover-border': HOVER_COLOR['헬멧 미착용'].border, '--hover-text': BADGE_COLOR['헬멧 미착용'].text }
-                }
-                onClick={() => setFilter('헬멧 미착용')}
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2a9 9 0 0 0-9 9h18a9 9 0 0 0-9-9z"/>
-                  <path d="M3 11h18v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2z"/>
-                  <path d="M8 15v1a4 4 0 0 0 8 0v-1"/>
-                </svg>
-                헬멧 미착용
-              </button>
-              <button
-                className={`${styles.filterBtn} ${filter === '다인 탑승' ? styles.active : ''}`}
-                style={filter === '다인 탑승'
-                  ? { backgroundColor: BADGE_COLOR['다인 탑승'].bg, borderColor: HOVER_COLOR['다인 탑승'].border, color: BADGE_COLOR['다인 탑승'].text }
-                  : { '--hover-bg': HOVER_COLOR['다인 탑승'].bg, '--hover-border': HOVER_COLOR['다인 탑승'].border, '--hover-text': BADGE_COLOR['다인 탑승'].text }
-                }
-                onClick={() => setFilter('다인 탑승')}
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                  <circle cx="9" cy="7" r="4"/>
-                  <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                </svg>
-                다인 탑승
-              </button>
-              <button
-                className={`${styles.filterBtn} ${filter === '인도 주행' ? styles.active : ''}`}
-                style={filter === '인도 주행'
-                  ? { backgroundColor: BADGE_COLOR['인도 주행'].bg, borderColor: HOVER_COLOR['인도 주행'].border, color: BADGE_COLOR['인도 주행'].text }
-                  : { '--hover-bg': HOVER_COLOR['인도 주행'].bg, '--hover-border': HOVER_COLOR['인도 주행'].border, '--hover-text': BADGE_COLOR['인도 주행'].text }
-                }
-                onClick={() => setFilter('인도 주행')}
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="4" r="2"/>
-                  <path d="M9 22v-7l-2-5h10l-2 5v7"/>
-                  <path d="M9 12h6"/>
-                </svg>
-                인도 주행
-              </button>
-            </div>
-            <div className={styles.filterDivider} />
-            <button className={`${styles.filterBtn} ${filter === '전체' ? styles.active : ''}`} onClick={() => setFilter('전체')}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
-              </svg>
-              전체
-            </button>
+            <span className={styles.countText}>총 <strong>{filtered.length}</strong>건</span>
           </div>
         </div>
       </div>
-
-      <p className={styles.countText}>총 <strong>{filtered.length}</strong>건의 기록</p>
 
       {/* 한 화면에 10건이 다 보이도록 표로 표시. 행을 누르면(또는 Enter) 상세 팝업 */}
       <div className={styles.tableWrap}>
@@ -273,25 +334,41 @@ function ViolationsPage() {
             </tbody>
           </table>
         )}
-      </div>
 
-      {totalPages > 1 && (
-        <div className={styles.pagination}>
-          <button className={styles.pageBtn} onClick={() => setPage(1)} disabled={page === 1} aria-label="첫 페이지">«</button>
-          <button className={styles.pageBtn} onClick={() => setPage(blockStart - PAGE_BLOCK)} disabled={blockStart === 1} aria-label="이전 묶음">‹</button>
-          {blockPages.map(p => (
-            <button
-              key={p}
-              className={`${styles.pageBtn} ${p === page ? styles.pageActive : ''}`}
-              onClick={() => setPage(p)}
-            >
-              {p}
-            </button>
-          ))}
-          <button className={styles.pageBtn} onClick={() => setPage(blockStart + PAGE_BLOCK)} disabled={blockEnd === totalPages} aria-label="다음 묶음">›</button>
-          <button className={styles.pageBtn} onClick={() => setPage(totalPages)} disabled={page === totalPages} aria-label="마지막 페이지">»</button>
-        </div>
-      )}
+        {/* 표 카드 아래쪽: 페이지 버튼 */}
+        {totalPages > 1 && (
+          <div className={styles.tableFooter}>
+            <div className={styles.pagination}>
+              <button className={styles.pageIconBtn} onClick={() => setPage(1)} disabled={page === 1} aria-label="첫 페이지">
+                {/* Lucide: chevrons-left */}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m11 17-5-5 5-5" /><path d="m18 17-5-5 5-5" /></svg>
+              </button>
+              <button className={styles.pageIconBtn} onClick={() => setPage(blockStart - PAGE_BLOCK)} disabled={blockStart === 1} aria-label="이전 묶음">
+                {/* Lucide: chevron-left */}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+              </button>
+              {blockPages.map(p => (
+                <button
+                  key={p}
+                  className={`${styles.pageBtn} ${p === page ? styles.pageActive : ''}`}
+                  onClick={() => setPage(p)}
+                  aria-current={p === page ? 'page' : undefined}
+                >
+                  {p}
+                </button>
+              ))}
+              <button className={styles.pageIconBtn} onClick={() => setPage(blockStart + PAGE_BLOCK)} disabled={blockEnd === totalPages} aria-label="다음 묶음">
+                {/* Lucide: chevron-right */}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
+              </button>
+              <button className={styles.pageIconBtn} onClick={() => setPage(totalPages)} disabled={page === totalPages} aria-label="마지막 페이지">
+                {/* Lucide: chevrons-right */}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 17 5-5-5-5" /><path d="m13 17 5-5-5-5" /></svg>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       {selected && (
         <div className={styles.modalOverlay} onClick={() => setSelected(null)}>
