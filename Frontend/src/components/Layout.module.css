@@ -86,3 +86,15 @@
   padding: 36px 48px;
   background-color: #ffffff;
 }
+
+.demoBadge {
+  margin: auto 16px 16px;
+  padding: 6px 10px;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
+  background-color: #fffbeb;
+  color: #b45309;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
