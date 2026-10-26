@@ -107,6 +107,11 @@ function ViolationsPage() {
       <div className={styles.header}>
         <div className={styles.titleRow}>
           <h2 className={styles.title}>단속 기록</h2>
+          <p className={styles.desc}>
+            AI가 감지한 위반 기록을 최신순으로 보여줍니다. 날짜와 위반 유형으로 걸러 볼 수 있습니다.
+            <br />
+            기록을 누르면 캡처 이미지와 AI 분석 신뢰도 등 상세 정보를 확인할 수 있습니다.
+          </p>
         </div>
 
         <div className={styles.filterPanel}>
