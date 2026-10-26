@@ -2,36 +2,12 @@ import { useMemo, useState } from 'react'
 import useApi from '../hooks/useApi'
 import { apiUrl } from '../config'
 import { toViolationList } from '../utils'
+import { TYPE_ICON, TOTAL_ICON } from '../typeIcons'
 import styles from './StatsPage.module.css'
 import {
   PieChart, Pie, Cell, Sector, Tooltip, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend,
 } from 'recharts'
-
-const TYPE_ICON = {
-  '헬멧 미착용': (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 2a9 9 0 0 0-9 9h18a9 9 0 0 0-9-9z"/>
-      <path d="M3 11h18v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2z"/>
-      <path d="M8 15v1a4 4 0 0 0 8 0v-1"/>
-    </svg>
-  ),
-  '다인 탑승': (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-      <circle cx="9" cy="7" r="4"/>
-      <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-      <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-    </svg>
-  ),
-  '인도 주행': (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="4" r="2"/>
-      <path d="M9 22v-7l-2-5h10l-2 5v7"/>
-      <path d="M9 12h6"/>
-    </svg>
-  ),
-}
 
 // color: 아이콘·글씨용 진한 색 / chart: 차트용 연한 색(아이콘 배경과 같은 파스텔 계열, 300 단계)
 // icon / tint: 요약 카드 아이콘(600 단계)과 아이콘 배경(100 단계, 70% 불투명)
@@ -146,12 +122,7 @@ function StatsPage() {
             <div className={styles.summaryRow}>
               <div className={styles.summaryCard}>
                 <div className={styles.summaryCardLabel}>
-                  <span className={styles.summaryIconBox}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                      <line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                    </svg>
-                  </span>
+                  <span className={styles.summaryIconBox}>{TOTAL_ICON}</span>
                   전체 단속
                 </div>
                 <p className={styles.summaryVal}>{total}<span className={styles.summaryUnit}>건</span></p>

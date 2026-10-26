@@ -3,6 +3,7 @@ import { TYPE_COLOR, BADGE_COLOR } from '../constants'
 import useApi from '../hooks/useApi'
 import { apiUrl } from '../config'
 import { toViolationList } from '../utils'
+import { TYPE_ICON } from '../typeIcons'
 import styles from './ViolationsPage.module.css'
 
 // 필터 탭 순서 (통계 페이지와 같은 순서, 전체를 맨 앞)
@@ -82,31 +83,6 @@ const MODAL_BADGE = {
   '헬멧 미착용': { bg: '#fef3c7', text: '#b45309', border: '#fde68a' },
   '다인 탑승':   { bg: '#ede9fe', text: '#6d28d9', border: '#ddd6fe' },
   '인도 주행':   { bg: '#fee2e2', text: '#b91c1c', border: '#fecaca' },
-}
-
-const TYPE_ICON = {
-  '헬멧 미착용': (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 2a9 9 0 0 0-9 9h18a9 9 0 0 0-9-9z"/>
-      <path d="M3 11h18v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2z"/>
-      <path d="M8 15v1a4 4 0 0 0 8 0v-1"/>
-    </svg>
-  ),
-  '다인 탑승': (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-      <circle cx="9" cy="7" r="4"/>
-      <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
-      <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-    </svg>
-  ),
-  '인도 주행': (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="4" r="2"/>
-      <path d="M9 22v-7l-2-5h10l-2 5v7"/>
-      <path d="M9 12h6"/>
-    </svg>
-  ),
 }
 
 function formatTimestamp(ts) {
