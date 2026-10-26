@@ -257,8 +257,8 @@ function ViolationsPage() {
                   </td>
                   <td className={styles.cellStrong}>{v.camera}</td>
                   <td className={styles.cellMuted}>{v.location || '—'}</td>
-                  <td className={styles.cellMuted}>{v.timestamp}</td>
-                  <td className={`${styles.cellMuted} ${styles.colNum}`}>{v.confidence}%</td>
+                  <td className={styles.cellTime}>{v.timestamp}</td>
+                  <td className={`${styles.cellConf} ${styles.colNum}`}>{v.confidence}%</td>
                   <td className={styles.colAction}>
                     <span className={styles.viewLink}>
                       캡처 보기

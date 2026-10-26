@@ -24,8 +24,8 @@
   display: flex;
   flex-direction: column;
   gap: 19px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #e2e8f0;
+  /* 필터 아래 구분선 없이 여백으로만 나눔: 필터 ↔ 건수 24px (4px + 페이지 gap 20px) */
+  padding-bottom: 4px;
 }
 
 .filterPanel {
@@ -146,9 +146,10 @@
   margin: 0;
 }
 
+/* 건수 ↔ 표 12px (페이지 gap 20px - 8px) */
 .countText {
   margin: 0 0 -8px;
-  font-size: 13px;
+  font-size: 14px;
   color: #64748b;
 }
 
@@ -238,7 +239,7 @@
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .table th {
@@ -247,7 +248,7 @@
   border-bottom: 1px solid #e2e8f0;
   font-size: 12px;
   font-weight: 600;
-  color: #64748b;
+  color: #475569;
   text-align: left;
   white-space: nowrap;
 }
@@ -300,13 +301,25 @@
   color: #64748b;
 }
 
+/* 단속 일시: 숫자 폭을 같게 해서 줄마다 자릿수가 맞게 */
+.cellTime {
+  color: #475569;
+  font-variant-numeric: tabular-nums;
+}
+
+.cellConf {
+  font-weight: 600;
+  color: #334155;
+  font-variant-numeric: tabular-nums;
+}
+
 .viewLink {
   display: inline-flex;
   align-items: center;
   gap: 2px;
   font-size: 13px;
   font-weight: 600;
-  color: #94a3b8;
+  color: #2563eb;
   transition: color 0.15s;
 }
 
@@ -317,7 +330,9 @@
 
 .row:hover .viewLink,
 .row:focus-visible .viewLink {
-  color: #2563eb;
+  color: #1d4ed8;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .badge {
