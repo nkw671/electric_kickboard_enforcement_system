@@ -83,6 +83,8 @@
 .main {
   flex: 1;
   overflow-y: auto;
+  /* 스크롤바 자리를 항상 비워둬서, 스크롤이 생기는 페이지(단속 기록 등)만 내용이 옆으로 밀리지 않게 함 */
+  scrollbar-gutter: stable;
   padding: 36px 48px;
   background-color: #ffffff;
 }
