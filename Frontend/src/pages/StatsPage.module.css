@@ -24,12 +24,12 @@
 .header {
   display: flex;
   flex-direction: column;
-  /* 제목·설명 위치를 다른 페이지와 맞춤 (설명 아래 여백 19px) */
-  margin-bottom: 19px;
+  /* 제목·설명 위치를 다른 페이지와 맞춤 (설명 아래 여백 16px) */
+  margin-bottom: 16px;
 }
 
 .desc {
-  margin: 13px 0 0;
+  margin: 16px 0 0;
   font-size: 15px;
   line-height: 1.5;
   color: #64748b;
