@@ -1,19 +1,19 @@
 export const TYPE_COLOR = {
-  '헬멧 미착용': '#0ea5e9',
-  '다인 탑승':   '#f59e0b',
-  '인도 주행':   '#ec4899',
+  '헬멧 미착용': '#a855f7',
+  '다인 탑승':   '#3b82f6',
+  '인도 주행':   '#ef4444',
 }
 
 export const BADGE_COLOR = {
-  '헬멧 미착용': { bg: '#e0f2fe', text: '#0369a1' },
-  '다인 탑승':   { bg: '#fef3c7', text: '#b45309' },
-  '인도 주행':   { bg: '#fce7f3', text: '#be185d' },
+  '헬멧 미착용': { bg: '#f3e8ff', text: '#7e22ce' },
+  '다인 탑승':   { bg: '#dbeafe', text: '#1d4ed8' },
+  '인도 주행':   { bg: '#fee2e2', text: '#b91c1c' },
 }
 
 export const HOVER_COLOR = {
-  '헬멧 미착용': { bg: '#e0f2fe', border: '#bae6fd' },
-  '다인 탑승':   { bg: '#fef3c7', border: '#fde68a' },
-  '인도 주행':   { bg: '#fce7f3', border: '#fbcfe8' },
+  '헬멧 미착용': { bg: '#f3e8ff', border: '#e9d5ff' },
+  '다인 탑승':   { bg: '#dbeafe', border: '#bfdbfe' },
+  '인도 주행':   { bg: '#fee2e2', border: '#fecaca' },
 }
 
 export const VIOLATION_TYPES = [
