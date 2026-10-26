@@ -37,7 +37,7 @@ const TYPE_ICON = {
 // icon / tint: 요약 카드 아이콘(600 단계)과 아이콘 배경(100 단계, 70% 불투명)
 const TYPE_CONFIG = {
   '헬멧 미착용': { color: '#f59e0b', chart: '#fcd34d', icon: '#d97706', tint: 'rgba(254, 243, 199, 0.7)', borderColor: '#fde68a' },
-  '다인 탑승':   { color: '#3b82f6', chart: '#93c5fd', icon: '#2563eb', tint: 'rgba(219, 234, 254, 0.7)', borderColor: '#bfdbfe' },
+  '다인 탑승':   { color: '#8b5cf6', chart: '#c4b5fd', icon: '#7c3aed', tint: 'rgba(237, 233, 254, 0.7)', borderColor: '#ddd6fe' },
   '인도 주행':   { color: '#ef4444', chart: '#fca5a5', icon: '#dc2626', tint: 'rgba(254, 226, 226, 0.7)', borderColor: '#fecaca' },
 }
 

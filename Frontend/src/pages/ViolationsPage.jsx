@@ -80,7 +80,7 @@ function DateField({ value, fallback, min, max, onChange, label, buttonRef }) {
 
 const MODAL_BADGE = {
   '헬멧 미착용': { bg: '#fef3c7', text: '#b45309', border: '#fde68a' },
-  '다인 탑승':   { bg: '#dbeafe', text: '#1d4ed8', border: '#bfdbfe' },
+  '다인 탑승':   { bg: '#ede9fe', text: '#6d28d9', border: '#ddd6fe' },
   '인도 주행':   { bg: '#fee2e2', text: '#b91c1c', border: '#fecaca' },
 }
 
