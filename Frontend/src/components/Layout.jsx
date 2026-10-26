@@ -106,7 +106,7 @@ function Layout({ children }) {
             />
           </svg>
           <span className={styles.brandName}>
-            <span className={styles.brandTitle}>Kick Dan</span>
+            <span className={styles.brandTitle}>KickDan</span>
             <span className={styles.brandSub}>전동킥보드 단속시스템</span>
           </span>
         </div>
