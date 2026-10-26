@@ -6,6 +6,8 @@
  * - SSE  /api/stream      → 10~20초마다 'violation' 이벤트 (목록에도 추가됨)
  * - GET/POST/DELETE /zones → 메모리에만 저장
  */
+import { TYPE_COLOR } from '../constants'
+
 const TYPES = ['헬멧 미착용', '헬멧 미착용', '헬멧 미착용', '인도 주행', '인도 주행', '다인 탑승']
 const CAMERAS = [
   { camera: 'CAM-01', location: '정문 앞 인도' },
@@ -29,11 +31,10 @@ function formatTimestamp(d) {
     `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
 }
 
-const SNAPSHOT_COLOR = { '헬멧 미착용': '#0ea5e9', '다인 탑승': '#f59e0b', '인도 주행': '#ec4899' }
-
 // 상세 화면에 보여줄 단속 이미지. 실제 캡처 대신 위반 유형이 표시된 간단한 그림.
+// 박스 색은 화면의 위반 유형 색(constants.js)을 그대로 쓴다.
 function snapshotUrl(type, camera, timestamp) {
-  const color = SNAPSHOT_COLOR[type]
+  const color = TYPE_COLOR[type]
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450">
 <rect width="800" height="450" fill="#334155"/>
 <polygon points="0,450 0,300 260,220 800,260 800,450" fill="#475569"/>
