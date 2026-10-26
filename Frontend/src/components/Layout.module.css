@@ -92,8 +92,9 @@
 }
 
 .navItem.active {
-  background-color: #f1f5f9;
-  color: #0f172a;
+  background-color: #0f172a;
+  color: #ffffff;
+  font-weight: 600;
 }
 
 .main {

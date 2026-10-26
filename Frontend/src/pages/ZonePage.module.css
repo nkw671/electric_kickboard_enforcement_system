@@ -337,11 +337,11 @@
 .btnSave {
   width: 100%;
   justify-content: center;
-  background-color: #2563eb;
+  background-color: #0f172a;
   color: #ffffff;
 }
 
-.btnSave:hover:not(:disabled) { background-color: #1d4ed8; }
+.btnSave:hover:not(:disabled) { background-color: #1e293b; }
 .btnSave:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .btnDelete {

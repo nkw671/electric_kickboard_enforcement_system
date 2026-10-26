@@ -95,6 +95,10 @@
   flex-shrink: 0;
 }
 
+.summaryTypeIcon {
+  display: flex;
+}
+
 .summaryCardLabel svg {
   width: 14px;
   height: 14px;

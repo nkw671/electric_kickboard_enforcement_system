@@ -94,7 +94,7 @@
 }
 
 .dateInput:focus {
-  border-color: #2563eb;
+  border-color: #0f172a;
 }
 
 .dateSep {
@@ -431,14 +431,14 @@
 .confidenceTitle svg {
   width: 15px;
   height: 15px;
-  color: #2563eb;
+  color: #0f172a;
   flex-shrink: 0;
 }
 
 .confidenceVal {
   font-size: 14px;
   font-weight: 700;
-  color: #2563eb;
+  color: #0f172a;
 }
 
 .progressTrack {
@@ -450,7 +450,7 @@
 
 .progressFill {
   height: 100%;
-  background-color: #2563eb;
+  background-color: #0f172a;
   border-radius: 9999px;
   transition: width 0.4s ease;
 }
@@ -528,9 +528,9 @@
 }
 
 .pageBtn:hover:not(:disabled) {
-  border-color: #2563eb;
-  color: #2563eb;
-  background-color: #eff6ff;
+  border-color: #94a3b8;
+  color: #0f172a;
+  background-color: #f8fafc;
 }
 
 .pageBtn:disabled {
@@ -540,8 +540,8 @@
 
 .pageActive,
 .pageActive:hover:not(:disabled) {
-  background-color: #2563eb;
-  border-color: #2563eb;
+  background-color: #0f172a;
+  border-color: #0f172a;
   color: #ffffff;
   font-weight: 600;
 }

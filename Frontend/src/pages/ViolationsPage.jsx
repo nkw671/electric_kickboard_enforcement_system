@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { TYPE_COLOR, BADGE_COLOR, HOVER_COLOR } from '../constants'
+import { BADGE_COLOR, HOVER_COLOR } from '../constants'
 import useApi from '../hooks/useApi'
 import { apiUrl } from '../config'
 import { toViolationList } from '../utils'
@@ -168,8 +168,8 @@ function ViolationsPage() {
               <button
                 className={`${styles.filterBtn} ${filter === '헬멧 미착용' ? styles.active : ''}`}
                 style={filter === '헬멧 미착용'
-                  ? { backgroundColor: TYPE_COLOR['헬멧 미착용'], borderColor: TYPE_COLOR['헬멧 미착용'], color: '#fff' }
-                  : { color: TYPE_COLOR['헬멧 미착용'], '--hover-bg': HOVER_COLOR['헬멧 미착용'].bg, '--hover-border': HOVER_COLOR['헬멧 미착용'].border, '--hover-text': TYPE_COLOR['헬멧 미착용'] }
+                  ? { backgroundColor: BADGE_COLOR['헬멧 미착용'].bg, borderColor: HOVER_COLOR['헬멧 미착용'].border, color: BADGE_COLOR['헬멧 미착용'].text }
+                  : { '--hover-bg': HOVER_COLOR['헬멧 미착용'].bg, '--hover-border': HOVER_COLOR['헬멧 미착용'].border, '--hover-text': BADGE_COLOR['헬멧 미착용'].text }
                 }
                 onClick={() => setFilter('헬멧 미착용')}
               >
@@ -183,8 +183,8 @@ function ViolationsPage() {
               <button
                 className={`${styles.filterBtn} ${filter === '다인 탑승' ? styles.active : ''}`}
                 style={filter === '다인 탑승'
-                  ? { backgroundColor: TYPE_COLOR['다인 탑승'], borderColor: TYPE_COLOR['다인 탑승'], color: '#fff' }
-                  : { color: TYPE_COLOR['다인 탑승'], '--hover-bg': HOVER_COLOR['다인 탑승'].bg, '--hover-border': HOVER_COLOR['다인 탑승'].border, '--hover-text': TYPE_COLOR['다인 탑승'] }
+                  ? { backgroundColor: BADGE_COLOR['다인 탑승'].bg, borderColor: HOVER_COLOR['다인 탑승'].border, color: BADGE_COLOR['다인 탑승'].text }
+                  : { '--hover-bg': HOVER_COLOR['다인 탑승'].bg, '--hover-border': HOVER_COLOR['다인 탑승'].border, '--hover-text': BADGE_COLOR['다인 탑승'].text }
                 }
                 onClick={() => setFilter('다인 탑승')}
               >
@@ -199,8 +199,8 @@ function ViolationsPage() {
               <button
                 className={`${styles.filterBtn} ${filter === '인도 주행' ? styles.active : ''}`}
                 style={filter === '인도 주행'
-                  ? { backgroundColor: TYPE_COLOR['인도 주행'], borderColor: TYPE_COLOR['인도 주행'], color: '#fff' }
-                  : { color: TYPE_COLOR['인도 주행'], '--hover-bg': HOVER_COLOR['인도 주행'].bg, '--hover-border': HOVER_COLOR['인도 주행'].border, '--hover-text': TYPE_COLOR['인도 주행'] }
+                  ? { backgroundColor: BADGE_COLOR['인도 주행'].bg, borderColor: HOVER_COLOR['인도 주행'].border, color: BADGE_COLOR['인도 주행'].text }
+                  : { '--hover-bg': HOVER_COLOR['인도 주행'].bg, '--hover-border': HOVER_COLOR['인도 주행'].border, '--hover-text': BADGE_COLOR['인도 주행'].text }
                 }
                 onClick={() => setFilter('인도 주행')}
               >

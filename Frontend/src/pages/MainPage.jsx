@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { TYPE_COLOR, FEED_MAX_COUNT } from '../constants'
+import { BADGE_COLOR, FEED_MAX_COUNT } from '../constants'
 import { extractTime, toViolationList } from '../utils'
 import { apiUrl, aiUrl } from '../config'
 import useApi from '../hooks/useApi'
@@ -81,7 +81,7 @@ function MainPage() {
           <div className={styles.toastContent}>
             <span
               className={styles.toastBadge}
-              style={{ backgroundColor: TYPE_COLOR[toast.type] || '#64748b' }}
+              style={{ backgroundColor: BADGE_COLOR[toast.type]?.bg || '#f1f5f9', color: BADGE_COLOR[toast.type]?.text || '#475569' }}
             >
               {toast.type}
             </span>
@@ -180,7 +180,7 @@ function MainPage() {
                   <li key={v.id} className={styles.feedItem}>
                     <span
                       className={styles.feedBadge}
-                      style={{ backgroundColor: TYPE_COLOR[v.type] || '#64748b' }}
+                      style={{ backgroundColor: BADGE_COLOR[v.type]?.bg || '#f1f5f9', color: BADGE_COLOR[v.type]?.text || '#475569' }}
                     >
                       {v.type}
                     </span>

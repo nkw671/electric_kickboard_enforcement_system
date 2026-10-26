@@ -124,9 +124,9 @@ function StatsPage() {
                 const cfg = TYPE_CONFIG[name]
                 const pct = total ? Math.round((value / total) * 100) : 0
                 return (
-                  <div key={name} className={styles.summaryCard} style={{ borderColor: cfg.borderColor }}>
-                    <div className={styles.summaryCardLabel} style={{ color: cfg.color }}>
-                      {TYPE_ICON[name]}
+                  <div key={name} className={styles.summaryCard}>
+                    <div className={styles.summaryCardLabel}>
+                      <span className={styles.summaryTypeIcon} style={{ color: cfg.color }}>{TYPE_ICON[name]}</span>
                       {name}
                     </div>
                     <p className={styles.summaryVal}>{value}</p>
@@ -189,11 +189,13 @@ function StatsPage() {
           ) : (
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={timeData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey="time" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                <Tooltip />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <CartesianGrid vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="time" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={{ stroke: '#e2e8f0' }} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <Tooltip cursor={{ fill: '#f8fafc' }} />
+                {/* 범례 기본 정렬(이름순) 대신 위 요약 카드와 같은 순서로 */}
+                <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" iconSize={8}
+                  itemSorter={(item) => typeData.findIndex(t => t.name === item.value)} />
                 <Bar dataKey="헬멧 미착용" stackId="a" fill="#f59e0b" radius={[0, 0, 0, 0]} />
                 <Bar dataKey="다인 탑승"   stackId="a" fill="#3b82f6" />
                 <Bar dataKey="인도 주행"   stackId="a" fill="#ef4444" radius={[4, 4, 0, 0]} />
