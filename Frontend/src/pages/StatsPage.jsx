@@ -33,10 +33,11 @@ const TYPE_ICON = {
   ),
 }
 
+// color: 아이콘·글씨용 진한 색 / chart: 차트용 연한 색(배지처럼 부드럽게 보이도록 300 단계)
 const TYPE_CONFIG = {
-  '헬멧 미착용': { color: '#f59e0b', borderColor: '#fde68a' },
-  '다인 탑승':   { color: '#3b82f6', borderColor: '#bfdbfe' },
-  '인도 주행':   { color: '#ef4444', borderColor: '#fecaca' },
+  '헬멧 미착용': { color: '#f59e0b', chart: '#fcd34d', borderColor: '#fde68a' },
+  '다인 탑승':   { color: '#3b82f6', chart: '#93c5fd', borderColor: '#bfdbfe' },
+  '인도 주행':   { color: '#ef4444', chart: '#fca5a5', borderColor: '#fecaca' },
 }
 
 
@@ -150,7 +151,7 @@ function StatsPage() {
                       처음부터 다시 시작해서, 타이밍에 따라 몇 초 동안 빈 차트로 보이는 문제가 있었음 */}
                   <Pie data={typeData} cx="50%" cy="50%" innerRadius={34} outerRadius={55} paddingAngle={3} dataKey="value" isAnimationActive={false}>
                     {typeData.map(({ name }) => (
-                      <Cell key={name} fill={TYPE_CONFIG[name].color} />
+                      <Cell key={name} fill={TYPE_CONFIG[name].chart} />
                     ))}
                   </Pie>
                   <Tooltip formatter={(v) => [`${v}건`, '단속 건수']} />
@@ -162,7 +163,7 @@ function StatsPage() {
                   return (
                     <div key={name} className={styles.pieLegendRow}>
                       <div className={styles.pieLegendLeft}>
-                        <span className={styles.pieDot} style={{ backgroundColor: TYPE_CONFIG[name].color }} />
+                        <span className={styles.pieDot} style={{ backgroundColor: TYPE_CONFIG[name].chart }} />
                         <span className={styles.pieLegendName}>{name}</span>
                       </div>
                       <span className={styles.pieLegendVal}>{value}건 ({pct}%)</span>
@@ -195,10 +196,11 @@ function StatsPage() {
                 <Tooltip cursor={{ fill: '#f8fafc' }} />
                 {/* 범례 기본 정렬(이름순) 대신 위 요약 카드와 같은 순서로 */}
                 <Legend wrapperStyle={{ fontSize: 12 }} iconType="circle" iconSize={8}
-                  itemSorter={(item) => typeData.findIndex(t => t.name === item.value)} />
-                <Bar dataKey="헬멧 미착용" stackId="a" fill="#f59e0b" radius={[0, 0, 0, 0]} />
-                <Bar dataKey="다인 탑승"   stackId="a" fill="#3b82f6" />
-                <Bar dataKey="인도 주행"   stackId="a" fill="#ef4444" radius={[4, 4, 0, 0]} />
+                  itemSorter={(item) => typeData.findIndex(t => t.name === item.value)}
+                  formatter={(value) => <span style={{ color: '#475569' }}>{value}</span>} />
+                <Bar dataKey="헬멧 미착용" stackId="a" fill={TYPE_CONFIG['헬멧 미착용'].chart} radius={[0, 0, 0, 0]} />
+                <Bar dataKey="다인 탑승"   stackId="a" fill={TYPE_CONFIG['다인 탑승'].chart} />
+                <Bar dataKey="인도 주행"   stackId="a" fill={TYPE_CONFIG['인도 주행'].chart} radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
