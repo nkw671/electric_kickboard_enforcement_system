@@ -8,9 +8,13 @@
   <rect x="560" y="40" width="200" height="150" fill="#1e293b"/>
   <rect x="40" y="70" width="180" height="140" fill="#1e293b"/>
 
-  <!-- 킥보드 1: 차도 주행 (정상) -->
+  <!-- AI 판정 기준: 박스 하단 중심(로컬 좌표 50,170)이 인도 구역(Zone-1) 안이면 인도 주행.
+       인도 구역 = installDemo.js의 기본 Zone-1 = 위 인도 polygon과 같은 좌표. -->
+
+  <!-- 킥보드 1: 차도 주행 (정상) — 하단 중심이 끝까지 차도 안에 있도록 인도 경계 전에 사라짐 -->
   <g>
-    <animateTransform attributeName="transform" type="translate" values="820 250; -200 270" dur="9s" repeatCount="indefinite"/>
+    <animateTransform attributeName="transform" type="translate" values="820 250; 250 275" dur="8s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="1; 1; 0" keyTimes="0; 0.85; 1" dur="8s" repeatCount="indefinite"/>
     <circle cx="40" cy="20" r="14" fill="#e2e8f0"/>
     <path d="M26 12 a14 14 0 0 1 28 0 z" fill="#22c55e"/>
     <rect x="28" y="36" width="24" height="60" rx="9" fill="#e2e8f0"/>
@@ -22,9 +26,9 @@
     <text x="4" y="-6" font-family="sans-serif" font-size="14" font-weight="bold" fill="#fff">kickboard 0.93</text>
   </g>
 
-  <!-- 킥보드 2: 인도 주행 + 헬멧 미착용 (위반) -->
+  <!-- 킥보드 2: 인도 주행 + 헬멧 미착용 (위반) — 인도를 따라 들어와 인도 안에 멈춤 -->
   <g>
-    <animateTransform attributeName="transform" type="translate" values="-160 250; 330 180; 330 180" keyTimes="0; 0.85; 1" dur="7s" repeatCount="indefinite"/>
+    <animateTransform attributeName="transform" type="translate" values="-160 260; 100 215; 100 215" keyTimes="0; 0.85; 1" dur="7s" repeatCount="indefinite"/>
     <circle cx="40" cy="20" r="14" fill="#e2e8f0"/>
     <rect x="28" y="36" width="24" height="60" rx="9" fill="#e2e8f0"/>
     <line x1="10" y1="150" x2="90" y2="150" stroke="#f8fafc" stroke-width="5"/>
