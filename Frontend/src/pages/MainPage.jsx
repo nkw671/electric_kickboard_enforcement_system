@@ -126,9 +126,9 @@ function MainPage() {
       )}
 
       <div className={styles.header}>
-        <h2 className={styles.pageTitle}>실시간 위반 감지 모니터링</h2>
+        <h2 className={styles.pageTitle}>위반 감지 모니터링</h2>
         <p className={styles.desc}>
-          AI가 단속 카메라 영상을 실시간으로 분석해 헬멧 미착용·다인 탑승·인도 주행을 감지합니다.
+          AI가 영상을 분석해 헬멧 미착용·다인 탑승·인도 주행을 감지합니다.
         </p>
       </div>
       <div className={styles.contentGrid}>
@@ -142,16 +142,8 @@ function MainPage() {
               </svg>
               <div className={styles.streamInfo}>
                 <div className={styles.streamCamName}>CAM-01</div>
-                <div className={styles.streamCamSub}>단속 카메라 영상</div>
+                <div className={styles.streamCamSub}>분석 영상</div>
               </div>
-            </div>
-            <div className={styles.streamBadges}>
-              {connected && (
-                <span className={styles.recordBadge}>
-                  <span className={styles.recordDot} /> 수신 중
-                </span>
-              )}
-              <span className={styles.liveBadge}>실시간 분석 중</span>
             </div>
           </div>
           <div className={styles.streamBody}>
@@ -192,10 +184,10 @@ function MainPage() {
             </div>
           </div>
 
-          {/* 실시간 알림 */}
+          {/* 최근 위반 목록 */}
           <div className={styles.sideCard}>
             <div className={styles.sideCardHeader}>
-              <span className={styles.sideCardTitle}>실시간 위반 알림</span>
+              <span className={styles.sideCardTitle}>최근 위반</span>
               {!sseConnected && (
                 <span className={`${styles.statusBadge} ${styles.statusBadgeWarn}`}>재연결 중</span>
               )}

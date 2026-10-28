@@ -102,48 +102,6 @@
   color: rgba(255,255,255,0.65);
 }
 
-.streamBadges {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  pointer-events: auto;
-}
-
-.recordBadge {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background-color: #dc2626;
-  color: #ffffff;
-  font-size: 14px;
-  font-weight: 600;
-  padding: 5px 12px;
-  border-radius: 6px;
-}
-
-.recordDot {
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: #ffffff;
-  animation: blink 1.2s infinite;
-}
-
-.liveBadge {
-  border: 1px solid #4b5563;
-  color: #d1d5db;
-  font-size: 14px;
-  font-weight: 600;
-  padding: 5px 12px;
-  border-radius: 6px;
-}
-
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
-}
-
 .streamBody {
   position: relative;
 }
