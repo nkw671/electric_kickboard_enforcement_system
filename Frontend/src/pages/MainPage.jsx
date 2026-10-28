@@ -126,9 +126,9 @@ function MainPage() {
       )}
 
       <div className={styles.header}>
-        <h2 className={styles.pageTitle}>위반 감지 모니터링</h2>
+        <h2 className={styles.pageTitle}>실시간 위반 감지 모니터링</h2>
         <p className={styles.desc}>
-          AI가 영상을 분석해 헬멧 미착용·다인 탑승·인도 주행을 감지합니다.
+          AI가 영상을 실시간으로 분석해 헬멧 미착용·다인 탑승·인도 주행을 감지합니다.
         </p>
       </div>
       <div className={styles.contentGrid}>
