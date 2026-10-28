@@ -1,9 +1,10 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { BADGE_COLOR, FEED_MAX_COUNT } from '../constants'
 import { extractTime, toViolationList } from '../utils'
 import { apiUrl, aiUrl } from '../config'
 import useApi from '../hooks/useApi'
 import useSSE from '../hooks/useSSE'
+import ViolationDetailModal from '../components/ViolationDetailModal'
 import styles from './MainPage.module.css'
 
 function MainPage() {
@@ -20,6 +21,14 @@ function MainPage() {
     clearTimeout(toastTimerRef.current)
     setToastLeaving(true)
     toastTimerRef.current = setTimeout(() => setToast(null), 250)
+  }
+
+  // 최근 위반 목록이나 토스트를 누르면 그 위반의 상세 창(캡처 이미지)을 연다
+  const [detail, setDetail] = useState(null)
+  const closeDetail = useCallback(() => setDetail(null), [])
+  const openToastDetail = () => {
+    setDetail(toast)
+    dismissToast()
   }
   const [currentTime, setCurrentTime] = useState('')
   const [streamError, setStreamError] = useState(false)
@@ -87,7 +96,13 @@ function MainPage() {
     <div className={styles.page}>
       {toast && (
         // 화면 우측 하단 고정. 아이콘 색은 위반 유형 색을 따름
-        <div className={`${styles.toast} ${toastLeaving ? styles.toastLeaving : ''}`} role="status">
+        // 토스트를 누르면 상세 창이 열림 (닫기 버튼은 토스트만 닫음)
+        <div
+          className={`${styles.toast} ${toastLeaving ? styles.toastLeaving : ''}`}
+          role="status"
+          onClick={openToastDetail}
+          title="눌러서 캡처 이미지 보기"
+        >
           <div
             className={styles.toastIcon}
             style={{ backgroundColor: BADGE_COLOR[toast.type]?.bg || '#f1f5f9', color: BADGE_COLOR[toast.type]?.text || '#475569' }}
@@ -112,10 +127,17 @@ function MainPage() {
                 {toast.type}
               </span>
               <span className={styles.toastCamera}>{toast.camera}</span>
-              <span className={styles.toastConf}>신뢰도 {toast.confidence}%</span>
             </div>
+            <span className={styles.toastHint}>눌러서 캡처 보기 ›</span>
           </div>
-          <button className={styles.toastClose} onClick={dismissToast} aria-label="알림 닫기">
+          <button
+            className={styles.toastClose}
+            onClick={(e) => {
+              e.stopPropagation()
+              dismissToast()
+            }}
+            aria-label="알림 닫기"
+          >
             {/* Lucide: x */}
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 6 6 18" />
@@ -201,15 +223,19 @@ function MainPage() {
             ) : (
               <ul className={styles.feedList}>
                 {violations.slice(0, FEED_MAX_COUNT).map((v) => (
-                  <li key={v.id} className={styles.feedItem}>
-                    <span
-                      className={styles.feedBadge}
-                      style={{ backgroundColor: BADGE_COLOR[v.type]?.bg || '#f1f5f9', color: BADGE_COLOR[v.type]?.text || '#475569' }}
-                    >
-                      {v.type}
-                    </span>
-                    <span className={styles.feedCamera}>{v.camera}</span>
-                    <span className={styles.feedTime}>{extractTime(v.timestamp)}</span>
+                  <li key={v.id}>
+                    <button type="button" className={styles.feedItem} onClick={() => setDetail(v)}>
+                      <span
+                        className={styles.feedBadge}
+                        style={{ backgroundColor: BADGE_COLOR[v.type]?.bg || '#f1f5f9', color: BADGE_COLOR[v.type]?.text || '#475569' }}
+                      >
+                        {v.type}
+                      </span>
+                      <span className={styles.feedCamera}>{v.camera}</span>
+                      <span className={styles.feedTime}>{extractTime(v.timestamp)}</span>
+                      {/* Lucide: chevron-right */}
+                      <svg className={styles.feedChevron} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -217,6 +243,8 @@ function MainPage() {
           </div>
         </div>
       </div>
+
+      {detail && <ViolationDetailModal violation={detail} onClose={closeDetail} />}
     </div>
   )
 }
