@@ -25,6 +25,19 @@ function MainPage() {
 
   // 최근 위반 목록이나 토스트를 누르면 그 위반의 상세 창(캡처 이미지)을 연다
   const [detail, setDetail] = useState(null)
+
+  // 영상 전체화면: 영상 영역(영상 + 시각 표시)만 크게. Esc로 나오면 상태도 같이 돌아오게 fullscreenchange로 동기화
+  const streamBodyRef = useRef(null)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  useEffect(() => {
+    const onChange = () => setIsFullscreen(document.fullscreenElement === streamBodyRef.current)
+    document.addEventListener('fullscreenchange', onChange)
+    return () => document.removeEventListener('fullscreenchange', onChange)
+  }, [])
+  const toggleFullscreen = () => {
+    if (document.fullscreenElement) document.exitFullscreen()
+    else streamBodyRef.current?.requestFullscreen?.()
+  }
   const closeDetail = useCallback(() => setDetail(null), [])
   const openToastDetail = () => {
     setDetail(toast)
@@ -167,8 +180,31 @@ function MainPage() {
                 <div className={styles.streamCamSub}>분석 영상</div>
               </div>
             </div>
+            <button
+              type="button"
+              className={styles.fullscreenBtn}
+              onClick={toggleFullscreen}
+              disabled={streamError}
+              aria-label={isFullscreen ? '전체화면 끝내기' : '영상 전체화면'}
+              title={isFullscreen ? '전체화면 끝내기 (Esc)' : '영상 전체화면'}
+            >
+              {isFullscreen ? (
+                // Lucide: minimize
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M8 3v3a2 2 0 0 1-2 2H3" /><path d="M21 8h-3a2 2 0 0 1-2-2V3" />
+                  <path d="M3 16h3a2 2 0 0 1 2 2v3" /><path d="M16 21v-3a2 2 0 0 1 2-2h3" />
+                </svg>
+              ) : (
+                // Lucide: maximize
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M8 3H5a2 2 0 0 0-2 2v3" /><path d="M21 8V5a2 2 0 0 0-2-2h-3" />
+                  <path d="M3 16v3a2 2 0 0 0 2 2h3" /><path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+                </svg>
+              )}
+              전체화면
+            </button>
           </div>
-          <div className={styles.streamBody}>
+          <div className={styles.streamBody} ref={streamBodyRef}>
             {!streamError ? (
               <img
                 src={aiUrl(`/video/stream?t=${streamKey}`)}
