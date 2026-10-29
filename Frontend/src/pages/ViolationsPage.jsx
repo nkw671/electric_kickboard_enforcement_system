@@ -6,9 +6,9 @@ import { toViolationList } from '../utils'
 import styles from './ViolationsPage.module.css'
 
 const MODAL_BADGE = {
-  '헬멧 미착용': { bg: '#e0f2fe', text: '#0369a1', border: '#bae6fd' },
-  '다인 탑승':   { bg: '#fef3c7', text: '#b45309', border: '#fde68a' },
-  '인도 주행':   { bg: '#fce7f3', text: '#be185d', border: '#fbcfe8' },
+  '헬멧 미착용': { bg: '#fef3c7', text: '#b45309', border: '#fde68a' },
+  '다인 탑승':   { bg: '#dbeafe', text: '#1d4ed8', border: '#bfdbfe' },
+  '인도 주행':   { bg: '#fee2e2', text: '#b91c1c', border: '#fecaca' },
 }
 
 const TYPE_ICON = {

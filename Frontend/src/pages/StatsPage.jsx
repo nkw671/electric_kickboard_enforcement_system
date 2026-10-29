@@ -34,9 +34,9 @@ const TYPE_ICON = {
 }
 
 const TYPE_CONFIG = {
-  '헬멧 미착용': { color: '#0ea5e9', borderColor: '#bae6fd' },
-  '다인 탑승':   { color: '#f59e0b', borderColor: '#fde68a' },
-  '인도 주행':   { color: '#ec4899', borderColor: '#fbcfe8' },
+  '헬멧 미착용': { color: '#f59e0b', borderColor: '#fde68a' },
+  '다인 탑승':   { color: '#3b82f6', borderColor: '#bfdbfe' },
+  '인도 주행':   { color: '#ef4444', borderColor: '#fecaca' },
 }
 
 
@@ -192,9 +192,9 @@ function StatsPage() {
                 <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                 <Tooltip />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar dataKey="헬멧 미착용" stackId="a" fill="#0ea5e9" radius={[0, 0, 0, 0]} />
-                <Bar dataKey="다인 탑승"   stackId="a" fill="#f59e0b" />
-                <Bar dataKey="인도 주행"   stackId="a" fill="#ec4899" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="헬멧 미착용" stackId="a" fill="#f59e0b" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="다인 탑승"   stackId="a" fill="#3b82f6" />
+                <Bar dataKey="인도 주행"   stackId="a" fill="#ef4444" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}
