@@ -57,6 +57,8 @@ function ViolationsPage() {
   const [endDate, setEndDate] = useState('')
   const [page, setPage] = useState(1)
   const [selected, setSelected] = useState(null)
+  // 불러오지 못한 이미지 주소. 이미지는 AI 서버(vast.ai)에 있어서 서버가 꺼져 있으면 깨진다.
+  const [brokenImageUrl, setBrokenImageUrl] = useState(null)
 
   // limit(기존)과 size(페이지네이션 적용 후)를 같이 보냄 — 백엔드 머지 후 limit 제거
   const { data: apiData, loading, error } = useApi(apiUrl('/api/violations?limit=9999&size=9999'))
@@ -276,15 +278,20 @@ function ViolationsPage() {
             </div>
 
             <div className={styles.modalImageWrap}>
-              {selected.image_url ? (
-                <img src={selected.image_url} alt="위반 단속 이미지" className={styles.modalImage} />
+              {selected.image_url && selected.image_url !== brokenImageUrl ? (
+                <img
+                  src={selected.image_url}
+                  alt="위반 단속 이미지"
+                  className={styles.modalImage}
+                  onError={() => setBrokenImageUrl(selected.image_url)}
+                />
               ) : (
                 <div className={styles.modalImagePlaceholder}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 40, height: 40 }}>
                     <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
                     <polyline points="21 15 16 10 5 21"/>
                   </svg>
-                  캡처 이미지 없음
+                  {selected.image_url ? '이미지를 불러올 수 없습니다 (AI 서버 연결 확인)' : '캡처 이미지 없음'}
                 </div>
               )}
               {MODAL_BADGE[selected.type] && (
