@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450">
+  <!-- 데모 모드용 영상 스트림 대체 이미지. 실제 AI 출력 영상 캡처가 있으면 이 파일을 교체하면 됨. -->
+  <rect width="800" height="450" fill="#334155"/>
+  <!-- 인도(왼쪽 아래)와 차도 -->
+  <polygon points="0,450 0,300 260,220 330,225 120,450" fill="#64748b"/>
+  <polygon points="120,450 330,225 800,250 800,450" fill="#475569"/>
+  <line x1="460" y1="236" x2="420" y2="450" stroke="#cbd5e1" stroke-width="4" stroke-dasharray="28 22"/>
+  <rect x="560" y="40" width="200" height="150" fill="#1e293b"/>
+  <rect x="40" y="70" width="180" height="140" fill="#1e293b"/>
+
+  <!-- AI 판정 기준: 박스 하단 중심(로컬 좌표 50,170)이 인도 구역(Zone-1) 안이면 인도 주행.
+       인도 구역 = installDemo.js의 기본 Zone-1 = 위 인도 polygon과 같은 좌표. -->
+
+  <!-- 킥보드 1: 차도 주행 (정상) — 하단 중심이 끝까지 차도 안에 있도록 인도 경계 전에 사라짐 -->
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="820 250; 250 275" dur="8s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="1; 1; 0" keyTimes="0; 0.85; 1" dur="8s" repeatCount="indefinite"/>
+    <circle cx="40" cy="20" r="14" fill="#e2e8f0"/>
+    <path d="M26 12 a14 14 0 0 1 28 0 z" fill="#22c55e"/>
+    <rect x="28" y="36" width="24" height="60" rx="9" fill="#e2e8f0"/>
+    <line x1="10" y1="150" x2="90" y2="150" stroke="#f8fafc" stroke-width="5"/>
+    <line x1="18" y1="150" x2="26" y2="70" stroke="#f8fafc" stroke-width="4"/>
+    <circle cx="10" cy="157" r="9" fill="#f8fafc"/><circle cx="90" cy="157" r="9" fill="#f8fafc"/>
+    <rect x="-2" y="0" width="104" height="170" fill="none" stroke="#22c55e" stroke-width="3"/>
+    <rect x="-2" y="-24" width="104" height="24" fill="#22c55e"/>
+    <text x="4" y="-6" font-family="sans-serif" font-size="14" font-weight="bold" fill="#fff">kickboard 0.93</text>
+  </g>
+
+  <!-- 킥보드 2: 인도 주행 + 헬멧 미착용 (위반) — 인도를 따라 들어와 인도 안에 멈춤 -->
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="-160 260; 100 215; 100 215" keyTimes="0; 0.85; 1" dur="7s" repeatCount="indefinite"/>
+    <circle cx="40" cy="20" r="14" fill="#e2e8f0"/>
+    <rect x="28" y="36" width="24" height="60" rx="9" fill="#e2e8f0"/>
+    <line x1="10" y1="150" x2="90" y2="150" stroke="#f8fafc" stroke-width="5"/>
+    <line x1="82" y1="150" x2="74" y2="70" stroke="#f8fafc" stroke-width="4"/>
+    <circle cx="10" cy="157" r="9" fill="#f8fafc"/><circle cx="90" cy="157" r="9" fill="#f8fafc"/>
+    <rect x="-2" y="0" width="104" height="170" fill="none" stroke="#ef4444" stroke-width="3"/>
+    <rect x="-2" y="-24" width="150" height="24" fill="#ef4444"/>
+    <text x="4" y="-6" font-family="sans-serif" font-size="14" font-weight="bold" fill="#fff">인도 주행 · 헬멧 X</text>
+  </g>
+
+  <text x="784" y="436" font-family="sans-serif" font-size="14" fill="#cbd5e1" text-anchor="end">데모 영상</text>
+</svg>
