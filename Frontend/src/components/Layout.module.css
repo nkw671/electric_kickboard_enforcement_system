@@ -30,12 +30,28 @@
   flex-shrink: 0;
 }
 
+/* 로고 글씨는 index.html에서 불러오는 웹폰트. 못 불러오면 기본 글꼴로 표시됨.
+   크기는 사이드바 폭(글씨 영역 144px)에 꽉 차게 맞춘 값 */
 .brandName {
-  font-size: 24px;
-  font-weight: 700;
+  display: flex;
+  flex-direction: column;
   color: #0f172a;
-  line-height: 1.4;
-  white-space: normal;
+  white-space: nowrap;
+}
+
+.brandTitle {
+  font-family: 'Sunflower', 'Malgun Gothic', sans-serif;
+  font-weight: 700;
+  font-size: 38px;
+  line-height: 1;
+}
+
+.brandSub {
+  font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+  font-weight: 800;
+  font-size: 15px;
+  line-height: 1.2;
+  margin-top: 6px;
 }
 
 .nav {
