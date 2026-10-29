@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import useApi from '../hooks/useApi'
+import { apiUrl } from '../config'
 import { toViolationList } from '../utils'
 import styles from './StatsPage.module.css'
 import {
@@ -44,27 +45,34 @@ function StatsPage() {
   // 시간대별 차트만 백엔드에 시간대별 집계 API가 아직 없어서 전체 기록을
   // 받아 클라이언트에서 집계한다.
   // /api/stats: 백엔드 머지 후에는 { overall: {...} }, 그 전에는 평탄한 객체 — 둘 다 지원
-  const { data: statsData, loading: statsLoading, error: statsError } = useApi('/api/stats')
+  const { data: statsData, loading: statsLoading, error: statsError } = useApi(apiUrl('/api/stats'))
   const overall = statsData?.overall ?? statsData
   // limit(기존)과 size(페이지네이션 적용 후)를 같이 보냄 — 백엔드 머지 후 limit 제거
-  const { data: apiData, loading: violationsLoading, error: violationsError } = useApi('/api/violations?limit=9999&size=9999')
+  const { data: apiData, loading: violationsLoading, error: violationsError } = useApi(apiUrl('/api/violations?limit=9999&size=9999'))
   const violations = useMemo(() => toViolationList(apiData), [apiData])
 
-  const loading = statsLoading || violationsLoading
-  const error = statsError || violationsError
+  // 두 API 중 하나만 실패하면 그 데이터를 쓰는 카드에만 에러를 표시한다.
+  // 이전 데이터가 있으면 폴링 한 번 실패해도 그대로 보여준다.
+  const statsFailed = statsError && !statsData
+  const violationsFailed = violationsError && !apiData
 
   const total = overall?.total ?? 0
 
+  // 폴링 응답은 값이 같아도 매번 새 객체라서, overall을 의존성으로 두면 3초마다
+  // 차트 애니메이션이 처음부터 다시 재생된다. 값이 바뀔 때만 새 배열을 만든다.
+  const helmet = overall?.helmet ?? 0
+  const multiRider = overall?.multiRider ?? 0
+  const sidewalk = overall?.sidewalk ?? 0
   const typeData = useMemo(() => [
-    { name: '헬멧 미착용', value: overall?.helmet ?? 0 },
-    { name: '다인 탑승', value: overall?.multiRider ?? 0 },
-    { name: '인도 주행', value: overall?.sidewalk ?? 0 },
-  ], [overall])
+    { name: '헬멧 미착용', value: helmet },
+    { name: '다인 탑승', value: multiRider },
+    { name: '인도 주행', value: sidewalk },
+  ], [helmet, multiRider, sidewalk])
 
   // 0~23시 버킷을 항상 다 만들어 둔다. 실제로 기록이 있는 시간대만 버킷을 만들면
   // (특히 발표 데모처럼 데이터가 한두 시간대에 몰릴 때) 막대가 하나뿐이라 차트
   // 폭 전체를 꽉 채워버리는 문제가 있었음.
-  const timeData = useMemo(() => {
+  const rawTimeData = useMemo(() => {
     const buckets = {}
     for (let h = 0; h < 24; h++) {
       const hour = String(h).padStart(2, '0') + '시'
@@ -76,9 +84,11 @@ function StatsPage() {
     })
     return Object.values(buckets)
   }, [violations])
+  // 위와 같은 이유로, 집계 결과가 실제로 바뀔 때만 차트 데이터를 교체한다.
+  const timeDataKey = JSON.stringify(rawTimeData)
+  const timeData = useMemo(() => JSON.parse(timeDataKey), [timeDataKey])
 
-  if (loading) return <div className={styles.status}>불러오는 중...</div>
-  if (error) return <div className={styles.statusError}>서버에 연결할 수 없습니다.</div>
+  if (statsLoading && violationsLoading) return <div className={styles.status}>불러오는 중...</div>
 
   return (
     <div className={styles.page}>
@@ -88,68 +98,74 @@ function StatsPage() {
       </div>
 
       <div className={styles.content}>
-        {/* 요약 카드 4개 */}
-        <div className={styles.summaryRow}>
-          <div className={styles.summaryCard}>
-            <div className={styles.summaryCardLabel}>
-              <svg className={styles.summaryIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-                <line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-              전체 단속
-            </div>
-            <p className={styles.summaryVal}>{total}</p>
-            <p className={styles.summaryUnit}>건</p>
-          </div>
-          {typeData.map(({ name, value }) => {
-            const cfg = TYPE_CONFIG[name]
-            const pct = total ? Math.round((value / total) * 100) : 0
-            return (
-              <div key={name} className={styles.summaryCard} style={{ borderColor: cfg.borderColor }}>
-                <div className={styles.summaryCardLabel} style={{ color: cfg.color }}>
-                  {TYPE_ICON[name]}
-                  {name}
+        {statsFailed ? (
+          <div className={styles.cardError}>통계 서버에 연결할 수 없습니다.</div>
+        ) : (
+          <>
+            {/* 요약 카드 4개 */}
+            <div className={styles.summaryRow}>
+              <div className={styles.summaryCard}>
+                <div className={styles.summaryCardLabel}>
+                  <svg className={styles.summaryIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                  전체 단속
                 </div>
-                <p className={styles.summaryVal}>{value}</p>
-                <p className={styles.summaryUnit}>건 ({pct}%)</p>
+                <p className={styles.summaryVal}>{total}</p>
+                <p className={styles.summaryUnit}>건</p>
               </div>
-            )
-          })}
-        </div>
-
-        {/* 위반 유형 분포 */}
-        <div className={styles.chartCard}>
-          <div className={styles.chartCardHeader}>
-            <svg className={styles.chartHeaderIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-            </svg>
-            위반 유형 분포
-          </div>
-          <ResponsiveContainer width="100%" height={110} style={{ marginTop: '-8px' }}>
-            <PieChart>
-              <Pie data={typeData} cx="50%" cy="50%" innerRadius={34} outerRadius={55} paddingAngle={3} dataKey="value">
-                {typeData.map(({ name }) => (
-                  <Cell key={name} fill={TYPE_CONFIG[name].color} />
-                ))}
-              </Pie>
-              <Tooltip formatter={(v) => [`${v}건`, '단속 건수']} />
-            </PieChart>
-          </ResponsiveContainer>
-          <div className={styles.pieLegend}>
-            {typeData.map(({ name, value }) => {
-              const pct = total ? Math.round((value / total) * 100) : 0
-              return (
-                <div key={name} className={styles.pieLegendRow}>
-                  <div className={styles.pieLegendLeft}>
-                    <span className={styles.pieDot} style={{ backgroundColor: TYPE_CONFIG[name].color }} />
-                    <span className={styles.pieLegendName}>{name}</span>
+              {typeData.map(({ name, value }) => {
+                const cfg = TYPE_CONFIG[name]
+                const pct = total ? Math.round((value / total) * 100) : 0
+                return (
+                  <div key={name} className={styles.summaryCard} style={{ borderColor: cfg.borderColor }}>
+                    <div className={styles.summaryCardLabel} style={{ color: cfg.color }}>
+                      {TYPE_ICON[name]}
+                      {name}
+                    </div>
+                    <p className={styles.summaryVal}>{value}</p>
+                    <p className={styles.summaryUnit}>건 ({pct}%)</p>
                   </div>
-                  <span className={styles.pieLegendVal}>{value}건 ({pct}%)</span>
-                </div>
-              )
-            })}
-          </div>
-        </div>
+                )
+              })}
+            </div>
+
+            {/* 위반 유형 분포 */}
+            <div className={styles.chartCard}>
+              <div className={styles.chartCardHeader}>
+                <svg className={styles.chartHeaderIcon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                </svg>
+                위반 유형 분포
+              </div>
+              <ResponsiveContainer width="100%" height={110} style={{ marginTop: '-8px' }}>
+                <PieChart>
+                  <Pie data={typeData} cx="50%" cy="50%" innerRadius={34} outerRadius={55} paddingAngle={3} dataKey="value">
+                    {typeData.map(({ name }) => (
+                      <Cell key={name} fill={TYPE_CONFIG[name].color} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(v) => [`${v}건`, '단속 건수']} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className={styles.pieLegend}>
+                {typeData.map(({ name, value }) => {
+                  const pct = total ? Math.round((value / total) * 100) : 0
+                  return (
+                    <div key={name} className={styles.pieLegendRow}>
+                      <div className={styles.pieLegendLeft}>
+                        <span className={styles.pieDot} style={{ backgroundColor: TYPE_CONFIG[name].color }} />
+                        <span className={styles.pieLegendName}>{name}</span>
+                      </div>
+                      <span className={styles.pieLegendVal}>{value}건 ({pct}%)</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </>
+        )}
 
         {/* 시간대별 단속 현황 (전체 너비) */}
         <div className={styles.chartCard}>
@@ -159,18 +175,24 @@ function StatsPage() {
             </svg>
             시간대별 단속 현황
           </div>
-          <ResponsiveContainer width="100%" height={200}>
-            <BarChart data={timeData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-              <XAxis dataKey="time" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-              <Tooltip />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="헬멧 미착용" stackId="a" fill="#0ea5e9" radius={[0, 0, 0, 0]} />
-              <Bar dataKey="다인 탑승"   stackId="a" fill="#f59e0b" />
-              <Bar dataKey="인도 주행"   stackId="a" fill="#ec4899" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          {violationsLoading ? (
+            <div className={styles.status}>불러오는 중...</div>
+          ) : violationsFailed ? (
+            <div className={styles.statusError}>단속 기록 서버에 연결할 수 없습니다.</div>
+          ) : (
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart data={timeData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis dataKey="time" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                <Tooltip />
+                <Legend wrapperStyle={{ fontSize: 11 }} />
+                <Bar dataKey="헬멧 미착용" stackId="a" fill="#0ea5e9" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="다인 탑승"   stackId="a" fill="#f59e0b" />
+                <Bar dataKey="인도 주행"   stackId="a" fill="#ec4899" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </div>
       </div>
     </div>
