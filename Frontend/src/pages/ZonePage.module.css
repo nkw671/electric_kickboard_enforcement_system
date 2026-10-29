@@ -260,11 +260,38 @@
   flex-shrink: 0;
 }
 
-.zoneName {
+.zoneNameInput {
   flex: 1;
+  min-width: 0;
+  padding: 3px 6px;
+  margin-left: -6px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  font-family: inherit;
   font-size: 13px;
   font-weight: 500;
   color: #0f172a;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.zoneNameInput:hover {
+  border-color: #e2e8f0;
+  background-color: #ffffff;
+}
+
+.zoneNameInput:focus {
+  outline: none;
+  border-color: #94a3b8;
+  background-color: #ffffff;
+}
+
+.zoneNameHint {
+  margin: 0;
+  padding: 0 12px 10px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #94a3b8;
 }
 
 .zonePts {
