@@ -9,6 +9,23 @@ const DEFAULT_H = 450
 // 첫 꼭짓점에서 이 거리(화면 px) 안을 클릭하면 도형을 닫는다.
 const CLOSE_DISTANCE_PX = 12
 
+// 구역 이름은 AI가 인도 주행 판정 시 location으로 그대로 보내서 단속 기록·통계에 표시된다.
+const ZONE_NAME_MAX = 20
+
+// 다른 구역이 쓰지 않는 색을 고른다(구역을 지운 뒤 새로 그려도 색이 겹치지 않게). 다 쓰면 순환.
+function nextColor(zones) {
+  const used = new Set(zones.map(z => z.color.join(',')))
+  return ZONE_COLORS_BGR.find(c => !used.has(c.join(','))) ?? ZONE_COLORS_BGR[zones.length % ZONE_COLORS_BGR.length]
+}
+
+// 아직 쓰지 않은 가장 작은 번호로 기본 이름(Zone-n)을 만든다.
+function nextDefaultName(zones) {
+  const used = new Set(zones.map(z => z.name))
+  let n = 1
+  while (used.has(`Zone-${n}`)) n++
+  return `Zone-${n}`
+}
+
 const ZONE_COLORS_BGR = [
   [0,   0,   255],
   [0,   165, 255],
@@ -37,6 +54,17 @@ function ZonePage() {
   const [videoDims, setVideoDims] = useState({ w: DEFAULT_W, h: DEFAULT_H })
   // 삭제 확인 팝업: { title, message, confirmLabel, onConfirm } 또는 null
   const [confirmDialog, setConfirmDialog] = useState(null)
+  // 새로 완성한 구역의 이름 칸에 바로 입력할 수 있도록 포커스를 옮긴다.
+  const nameInputRefs = useRef([])
+  const [focusZoneIdx, setFocusZoneIdx] = useState(null)
+
+  useEffect(() => {
+    if (focusZoneIdx === null) return
+    const input = nameInputRefs.current[focusZoneIdx]
+    input?.focus()
+    input?.select()
+    setFocusZoneIdx(null)
+  }, [focusZoneIdx])
 
   // AI 서버(vast.ai)는 필요할 때만 켜두므로, 연결될 때까지 5초마다 다시 시도한다.
   // 연결되면 영상 스트림 에러 상태도 풀어서 영상을 다시 불러온다.
@@ -124,7 +152,7 @@ function ZonePage() {
 
     // 현재 그리는 중인 폴리곤
     if (currentPts.length > 0) {
-      const color = ZONE_COLORS_BGR[zones.length % ZONE_COLORS_BGR.length]
+      const color = nextColor(zones)
       const colorRgb = bgrToRgb(color)
 
       ctx.beginPath()
@@ -173,11 +201,16 @@ function ZonePage() {
 
   const finishZone = () => {
     if (currentPts.length < 3) return
-    const color = ZONE_COLORS_BGR[zones.length % ZONE_COLORS_BGR.length]
-    const name = `Zone-${zones.length + 1}`
+    const color = nextColor(zones)
+    const name = nextDefaultName(zones)
     setZones(prev => [...prev, { name, pts: currentPts, color }])
+    setFocusZoneIdx(zones.length)
     setCurrentPts([])
     setIsDrawing(false)
+  }
+
+  const renameZone = (idx, name) => {
+    setZones(prev => prev.map((z, i) => (i === idx ? { ...z, name: name.slice(0, ZONE_NAME_MAX) } : z)))
   }
 
   const cancelDraw = () => {
@@ -205,8 +238,9 @@ function ZonePage() {
     return () => window.removeEventListener('keydown', onKeyDown)
   })
 
+  // 직접 지은 이름이 있으므로 삭제 후 남은 구역 이름은 다시 매기지 않는다.
   const deleteZone = (idx) => {
-    setZones(prev => prev.filter((_, i) => i !== idx).map((z, i) => ({ ...z, name: `Zone-${i + 1}` })))
+    setZones(prev => prev.filter((_, i) => i !== idx))
   }
 
   // 확인 팝업은 Esc로도 닫을 수 있다.
@@ -243,11 +277,20 @@ function ZonePage() {
   }
 
   const saveZones = async () => {
+    // 이름을 비워두면 기본 이름으로 채우고, 같은 이름이 있으면 통계에서 합쳐지므로 저장하지 않는다.
+    const named = zones.map((z, i) => ({ ...z, name: z.name.trim() || `Zone-${i + 1}` }))
+    const names = named.map(z => z.name)
+    if (new Set(names).size !== names.length) {
+      setStatus({ ok: false, msg: '같은 이름의 구역이 있습니다' })
+      setTimeout(() => setStatus(null), 3000)
+      return
+    }
+    setZones(named)
     try {
       const res = await fetch(aiUrl('/zones'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ zones: zones.map(z => ({ name: z.name, pts: z.pts, color: z.color })) }),
+        body: JSON.stringify({ zones: named.map(z => ({ name: z.name, pts: z.pts, color: z.color })) }),
       })
       if (!res.ok) throw new Error()
       setStatus({ ok: true, msg: '저장 완료' })
@@ -358,13 +401,28 @@ function ZonePage() {
               zones.map((zone, i) => (
                 <div key={i} className={styles.zoneItem}>
                   <span className={styles.zoneDot} style={{ backgroundColor: bgrToHex(zone.color) }} />
-                  <span className={styles.zoneName}>{zone.name}</span>
+                  <input
+                    ref={(el) => { nameInputRefs.current[i] = el }}
+                    className={styles.zoneNameInput}
+                    value={zone.name}
+                    maxLength={ZONE_NAME_MAX}
+                    placeholder={`Zone-${i + 1}`}
+                    onChange={(e) => renameZone(i, e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }}
+                    aria-label={`구역 ${i + 1} 이름`}
+                  />
                   <span className={styles.zonePts}>꼭짓점 {zone.pts.length}개</span>
                   <button className={styles.zoneDeleteBtn} onClick={() => askDeleteZone(i)} aria-label={`${zone.name} 삭제`}>✕</button>
                 </div>
               ))
             )}
           </div>
+          {zones.length > 0 && (
+            <p className={styles.zoneNameHint}>
+              이름을 눌러 바꿀 수 있어요. 단속 기록·통계에 이 이름으로 표시됩니다.
+              (AI 영상 위에는 영문 이름만 제대로 보입니다)
+            </p>
+          )}
 
           <div className={styles.panelFooter}>
             {status && (
