@@ -24,4 +24,4 @@ WORKDIR /app
 COPY --from=builder /app/build/libs/*.jar app.jar
 
 # 운영 환경 프로필(prod)을 기본으로 하여 앱 실행
-ENTRYPOINT ["java", "-jar", "app.jar", "--spring.profiles.active=prod"]
+ENTRYPOINT ["java", "-Duser.timezone=Asia/Seoul", "-jar", "app.jar", "--spring.profiles.active=prod"]
