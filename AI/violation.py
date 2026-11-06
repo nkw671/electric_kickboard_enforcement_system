@@ -4,7 +4,7 @@ import numpy as np
 from abc import ABC, abstractmethod
 from datetime import datetime
 from PIL import Image, ImageDraw, ImageFont
-from config import COOLDOWN, SUSTAIN, VIOLATION_DIR
+from config import SUSTAIN, VIOLATION_DIR
 import os
 
 
@@ -99,10 +99,10 @@ class DoubleRidingViolation(ViolationStrategy):
 
 
 # 클래스명        : DecideViolation
-# 기능           : 위반 판정 전담 — 전략 목록 실행, 쿨다운, 렌더링, 콜백 처리
-# 내장 함수 목록  : __init__()          - 전략 목록, 쿨다운, 폰트, 콜백 초기화
+# 기능           : 위반 판정 전담 — 전략 목록 실행, 중복 기록 방지, 렌더링, 콜백 처리
+# 내장 함수 목록  : __init__()          - 전략 목록, 기록 집합, 폰트, 콜백 초기화
 #                  _load_font()        - 시스템 한글 폰트 탐색 및 로드
-#                  _should_alert()     - 동일 객체·위반 유형 쿨다운 여부 확인
+#                  _should_alert()     - 동일 객체·위반 유형의 최초 기록 여부 확인
 #                  _save_frame()       - 위반 프레임을 이미지 파일로 저장
 #                  _draw_violations()  - 위반 텍스트를 PIL 변환 1회로 일괄 렌더링
 #                  check()             - 매 프레임 전략 목록을 실행하여 위반 종합 판정
@@ -118,7 +118,7 @@ class DecideViolation:
     def __init__(self, strategies: list, on_violation: callable):
         self.strategies   = strategies
         self.on_violation = on_violation
-        self._last_alert  = {}                    # {(track_id, violation_type): 마지막 알림 시각}
+        self._recorded    = set()                 # {(track_id, violation_type)} 이미 기록한 조합
         self._first_seen  = {}                    # {(track_id, violation_type): 연속 관측 시작 시각}
         self._font        = self._load_font(20)   # 한글 폰트를 한 번만 로드한다.
 
@@ -143,16 +143,17 @@ class DecideViolation:
         return ImageFont.load_default()
 
     # 함수 이름 : _should_alert()
-    # 기능      : 동일 객체·위반 유형 조합에 대해 쿨다운이 지났는지 확인한다.
+    # 기능      : 동일 객체·위반 유형 조합이 처음 기록되는 것인지 확인한다.
+    #             음수 ID 는 트래커가 ID 를 부여하지 않은 임시 ID 이므로 기록하지 않는다.
     # 파라미터  : int track_id       -> 객체 추적 ID
     #             str violation_type -> 위반 유형 문자열
     # 반환값    : bool -> True 이면 알림 전송 가능
     def _should_alert(self, track_id: int, violation_type: str) -> bool:
         key = (track_id, violation_type)
-        if time.time() - self._last_alert.get(key, 0) >= COOLDOWN:
-            self._last_alert[key] = time.time()
-            return True
-        return False
+        if track_id < 0 or key in self._recorded:   # 미추적 객체·기록 완료 조합은 제외
+            return False
+        self._recorded.add(key)
+        return True
 
     # 함수 이름 : _save_frame()
     # 기능      : 위반이 발생한 프레임을 이미지 파일로 저장하고 로컬 경로를 반환한다.

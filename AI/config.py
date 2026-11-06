@@ -5,7 +5,6 @@ SOURCE          = "src/lowAngle_60fps.mp4"
 MODEL_PATH      = "src/final_s.pt"
 CONF            = 0.2    # 낮은 신뢰도 검출까지 ByteTrack 에 전달 → 2단계 연관으로 깜박임 방지
 HELMET_CONF     = 0.4    # helmet_O / helmet_X 전용 최소 신뢰도
-COOLDOWN         = 3.0
 SUSTAIN          = 1.5   # 위반이 단속으로 인정되기 위한 최소 연속 지속 시간 (초)
 TRACK_BUFFER_SEC = 5.0   # 객체 미감지 시 트랙 유지 시간 (초) — FPS에 따라 자동 환산
 ZONE_FILE       = "zones.json"

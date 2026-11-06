@@ -200,7 +200,7 @@ class DetectionLoop:
                 ids       = (
                     results[0].boxes.id.cpu().numpy().astype(int).tolist()
                     if results[0].boxes.id is not None
-                    else list(range(len(raw_boxes)))
+                    else list(range(-1, -len(raw_boxes) - 1, -1))   # 미추적 객체는 실제 트랙 ID 와 겹치지 않는 음수 임시 ID 사용
                 )
                 labels = [self.model.names[c] for c in cls_ids]
                 boxes  = [tuple(map(int, b)) for b in raw_boxes]
