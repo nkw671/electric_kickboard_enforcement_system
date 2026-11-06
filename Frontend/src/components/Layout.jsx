@@ -2,78 +2,63 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { DEMO_MODE } from '../demo/demoMode';
 import styles from './Layout.module.css';
 
+// 메뉴 아이콘: Lucide 아이콘(ISC 라이선스) 모양을 그대로 옮겨 씀. 선 두께는 글자와 어울리게 2.25
+function NavIcon({ children }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
+      {children}
+    </svg>
+  );
+}
+
 const NAV_ITEMS = [
   {
     path: '/',
     label: '모니터링',
+    // Lucide: video
     icon: (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <rect x="2" y="3" width="20" height="14" rx="2" />
-        <line x1="8" y1="21" x2="16" y2="21" />
-        <line x1="12" y1="17" x2="12" y2="21" />
-      </svg>
+      <NavIcon>
+        <path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5" />
+        <rect x="2" y="6" width="14" height="12" rx="2" />
+      </NavIcon>
     ),
   },
   {
     path: '/violations',
     label: '단속 기록',
+    // Lucide: file-text
     icon: (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-        <polyline points="14 2 14 8 20 8" />
-        <line x1="16" y1="13" x2="8" y2="13" />
-        <line x1="16" y1="17" x2="8" y2="17" />
-        <polyline points="10 9 9 9 8 9" />
-      </svg>
+      <NavIcon>
+        <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+        <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+        <path d="M10 9H8" />
+        <path d="M16 13H8" />
+        <path d="M16 17H8" />
+      </NavIcon>
     ),
   },
   {
     path: '/stats',
     label: '통계',
+    // Lucide: chart-column (구 bar-chart-3)
     icon: (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <line x1="18" y1="20" x2="18" y2="10" />
-        <line x1="12" y1="20" x2="12" y2="4" />
-        <line x1="6" y1="20" x2="6" y2="14" />
-      </svg>
+      <NavIcon>
+        <path d="M3 3v16a2 2 0 0 0 2 2h16" />
+        <path d="M18 17V9" />
+        <path d="M13 17V5" />
+        <path d="M8 17v-3" />
+      </NavIcon>
     ),
   },
   {
     path: '/zones',
     label: '구역 설정',
+    // Lucide: map-pin
     icon: (
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-        <circle cx="12" cy="10" r="3"/>
-      </svg>
+      <NavIcon>
+        <path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" />
+        <circle cx="12" cy="10" r="3" />
+      </NavIcon>
     ),
   },
 ];
@@ -86,29 +71,14 @@ function Layout({ children }) {
     <div className={styles.container}>
       <aside className={styles.sidebar}>
         <div className={styles.brand}>
-          <svg
-            className={styles.brandIcon}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.25"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            style={{ width: 64, height: 64, flexShrink: 0 }}
-          >
-            <circle cx="5" cy="19" r="2" />
-            <circle cx="19" cy="19" r="2" />
-            <line x1="5" y1="17" x2="19" y2="17" />
-            <line x1="7" y1="5" x2="13" y2="5" />
-            <path
-              d="M 10.6875 6.875 L 8.1875 11 L 11.8125 11 L 9.3125 15.125"
-              stroke="#f59e0b"
-              strokeWidth="1.5"
-            />
-          </svg>
+          {/* 번개 아이콘: "Thunder" by khaerul ilyas, Noun Project (CC BY 3.0) */}
+          <span className={styles.brandMark}>
+            <svg className={styles.brandIcon} viewBox="18 10 66 90" fill="currentColor" aria-hidden="true">
+              <path d="m21.969 63.406 17.371-2.2969c0.10156-0.011719 0.20312-0.019531 0.30859-0.019531 0.64062 0 1.2578 0.26172 1.7031 0.73438 0.51563 0.54688 0.73828 1.3086 0.59766 2.0508l-12.785 33.777 42.066-43.98-17.52-0.003906c-0.89453 0-1.707-0.50781-2.1016-1.3086s-0.30078-1.7578 0.24609-2.4648l24.441-31.773-47.191 13.539z" />
+            </svg>
+          </span>
           <span className={styles.brandName}>
             <span className={styles.brandTitle}>KickDan</span>
-            <span className={styles.brandSub}>전동킥보드 단속시스템</span>
           </span>
         </div>
         <nav className={styles.nav}>

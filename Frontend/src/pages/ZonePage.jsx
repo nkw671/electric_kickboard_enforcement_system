@@ -317,9 +317,7 @@ function ZonePage() {
       <div className={styles.header}>
         <h2 className={styles.title}>인도 구역 설정</h2>
         <p className={styles.desc}>
-          영상에서 인도 영역을 다각형으로 그려 주세요. 이 영역 안에서 주행하는 킥보드는 인도 주행으로 단속됩니다.
-          <br />
-          구역을 그린 뒤 <strong>AI 서버에 저장</strong>을 눌러야 반영됩니다.
+          인도 영역을 다각형으로 그린 뒤 <strong>AI 서버에 저장</strong>하면, 영역 안을 달리는 킥보드를 인도 주행으로 단속합니다.
         </p>
       </div>
 

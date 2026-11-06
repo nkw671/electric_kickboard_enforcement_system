@@ -5,7 +5,7 @@
 }
 
 .sidebar {
-  width: 260px;
+  width: 240px;
   height: 100%;
   background-color: #ffffff;
   border-right: 1px solid #e2e8f0;
@@ -14,24 +14,28 @@
   flex-shrink: 0;
 }
 
+/* 로고 아이콘 왼쪽 끝을 메뉴 아이콘 왼쪽 끝(16px + 메뉴 안쪽 12px = 28px)과 맞춤.
+   구분선 없이 아래 여백으로만 메뉴와 나눔 */
 .brand {
-  border-bottom: 1px solid #e2e8f0;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 28px 20px;
+  gap: 10px;
+  padding: 36px 16px 0 28px;
+  margin-bottom: 24px;
+  flex-shrink: 0;
+}
+
+.brandMark {
+  display: flex;
+  color: #1e293b;
   flex-shrink: 0;
 }
 
 .brandIcon {
-  width: 64px;
-  height: 64px;
-  color: #0f172a;
-  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
 }
 
-/* 로고 글씨는 index.html에서 불러오는 웹폰트. 못 불러오면 기본 글꼴로 표시됨.
-   크기는 사이드바 폭(글씨 영역 144px)에 꽉 차게 맞춘 값 */
 .brandName {
   display: flex;
   flex-direction: column;
@@ -40,26 +44,19 @@
 }
 
 .brandTitle {
-  font-family: 'Sunflower', 'Malgun Gothic', sans-serif;
-  font-weight: 700;
-  font-size: 38px;
-  line-height: 1;
-}
-
-.brandSub {
-  font-family: 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+  font-family: 'Plus Jakarta Sans', 'Pretendard Variable', Pretendard, sans-serif;
   font-weight: 800;
-  font-size: 15px;
-  line-height: 1.2;
-  margin-top: 6px;
+  letter-spacing: -0.5px;
+  font-size: 36px;
+  line-height: 1;
 }
 
 .nav {
   flex: 1;
-  padding: 8px;
+  padding: 0 16px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .navItem {
@@ -67,8 +64,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 12px;
-  border-radius: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
   border: none;
   background: none;
   font-size: 14px;
@@ -81,8 +78,8 @@
 }
 
 .navItem svg {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
 }
 
@@ -91,9 +88,11 @@
   color: #0f172a;
 }
 
+/* 선택된 메뉴: 연한 파란 배경 + 파란 글씨·아이콘 */
 .navItem.active {
-  background-color: #f1f5f9;
-  color: #0f172a;
+  background-color: #eff6ff;
+  color: #2563eb;
+  font-weight: 600;
 }
 
 .main {
@@ -106,13 +105,12 @@
 }
 
 .demoBadge {
-  margin: auto 16px 16px;
-  padding: 6px 10px;
-  border: 1px solid #fde68a;
-  border-radius: 6px;
-  background-color: #fffbeb;
-  color: #b45309;
+  align-self: flex-start;
+  margin: auto 16px 20px 28px;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  background-color: #f1f5f9;
+  color: #64748b;
   font-size: 12px;
-  font-weight: 600;
-  text-align: center;
+  font-weight: 500;
 }

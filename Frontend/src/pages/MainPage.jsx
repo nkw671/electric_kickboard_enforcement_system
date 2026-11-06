@@ -1,9 +1,10 @@
-import { useState, useRef, useEffect } from 'react'
-import { TYPE_COLOR, FEED_MAX_COUNT } from '../constants'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { BADGE_COLOR, FEED_MAX_COUNT } from '../constants'
 import { extractTime, toViolationList } from '../utils'
 import { apiUrl, aiUrl } from '../config'
 import useApi from '../hooks/useApi'
 import useSSE from '../hooks/useSSE'
+import ViolationDetailModal from '../components/ViolationDetailModal'
 import styles from './MainPage.module.css'
 
 function MainPage() {
@@ -12,7 +13,36 @@ function MainPage() {
   const violations = toViolationList(data)
 
   const [toast, setToast] = useState(null)
+  const [toastLeaving, setToastLeaving] = useState(false)
   const toastTimerRef = useRef(null)
+
+  // 토스트 닫기: 아래로 사라지는 애니메이션(0.25초)이 끝난 뒤 제거
+  const dismissToast = () => {
+    clearTimeout(toastTimerRef.current)
+    setToastLeaving(true)
+    toastTimerRef.current = setTimeout(() => setToast(null), 250)
+  }
+
+  // 최근 위반 목록이나 토스트를 누르면 그 위반의 상세 창(캡처 이미지)을 연다
+  const [detail, setDetail] = useState(null)
+
+  // 영상 전체화면: 영상 영역(영상 + 시각 표시)만 크게. Esc로 나오면 상태도 같이 돌아오게 fullscreenchange로 동기화
+  const streamBodyRef = useRef(null)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  useEffect(() => {
+    const onChange = () => setIsFullscreen(document.fullscreenElement === streamBodyRef.current)
+    document.addEventListener('fullscreenchange', onChange)
+    return () => document.removeEventListener('fullscreenchange', onChange)
+  }, [])
+  const toggleFullscreen = () => {
+    if (document.fullscreenElement) document.exitFullscreen()
+    else streamBodyRef.current?.requestFullscreen?.()
+  }
+  const closeDetail = useCallback(() => setDetail(null), [])
+  const openToastDetail = () => {
+    setDetail(toast)
+    dismissToast()
+  }
   const [currentTime, setCurrentTime] = useState('')
   const [streamError, setStreamError] = useState(false)
   const [streamKey, setStreamKey] = useState(0)
@@ -65,9 +95,11 @@ function MainPage() {
   }, [])
 
   const { connected: sseConnected } = useSSE(apiUrl('/api/stream'), (violation) => {
-    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+    clearTimeout(toastTimerRef.current)
     setToast(violation)
-    toastTimerRef.current = setTimeout(() => setToast(null), 4000)
+    setToastLeaving(false)
+    // 4초 뒤 자동으로 사라짐 (X 버튼으로 바로 닫을 수도 있음)
+    toastTimerRef.current = setTimeout(dismissToast, 4000)
   })
 
   // Backend(위반 목록 폴링), AI 영상 스트림, 실시간 알림(SSE) 셋 다 정상일 때만 "정상 작동"으로 표시한다.
@@ -76,27 +108,62 @@ function MainPage() {
   return (
     <div className={styles.page}>
       {toast && (
-        <div className={styles.toast}>
-          <span className={styles.toastLabel}>새 위반 감지</span>
-          <div className={styles.toastContent}>
-            <span
-              className={styles.toastBadge}
-              style={{ backgroundColor: TYPE_COLOR[toast.type] || '#64748b' }}
-            >
-              {toast.type}
-            </span>
-            <span className={styles.toastCamera}>{toast.camera}</span>
-            <span className={styles.toastConf}>{toast.confidence}%</span>
+        // 화면 우측 하단 고정. 아이콘 색은 위반 유형 색을 따름
+        // 토스트를 누르면 상세 창이 열림 (닫기 버튼은 토스트만 닫음)
+        <div
+          className={`${styles.toast} ${toastLeaving ? styles.toastLeaving : ''}`}
+          role="status"
+          onClick={openToastDetail}
+          title="눌러서 캡처 이미지 보기"
+        >
+          <div
+            className={styles.toastIcon}
+            style={{ backgroundColor: BADGE_COLOR[toast.type]?.bg || '#f1f5f9', color: BADGE_COLOR[toast.type]?.text || '#475569' }}
+          >
+            {/* Lucide: triangle-alert */}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
+              <path d="M12 9v4" />
+              <path d="M12 17h.01" />
+            </svg>
           </div>
+          <div className={styles.toastBody}>
+            <div className={styles.toastTop}>
+              <span className={styles.toastLabel}>새 위반 감지</span>
+              <span className={styles.toastTime}>방금 전</span>
+            </div>
+            <div className={styles.toastContent}>
+              <span
+                className={styles.toastBadge}
+                style={{ backgroundColor: BADGE_COLOR[toast.type]?.bg || '#f1f5f9', color: BADGE_COLOR[toast.type]?.text || '#475569' }}
+              >
+                {toast.type}
+              </span>
+              <span className={styles.toastCamera}>{toast.camera}</span>
+            </div>
+            <span className={styles.toastHint}>눌러서 캡처 보기 ›</span>
+          </div>
+          <button
+            className={styles.toastClose}
+            onClick={(e) => {
+              e.stopPropagation()
+              dismissToast()
+            }}
+            aria-label="알림 닫기"
+          >
+            {/* Lucide: x */}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
+          </button>
         </div>
       )}
 
       <div className={styles.header}>
         <h2 className={styles.pageTitle}>실시간 위반 감지 모니터링</h2>
         <p className={styles.desc}>
-          AI가 단속 카메라 영상을 실시간으로 분석해 헬멧 미착용·다인 탑승·인도 주행을 감지합니다.
-          <br />
-          위반이 감지되면 알림과 함께 오른쪽 목록에 바로 추가됩니다.
+          AI가 영상을 실시간으로 분석해 헬멧 미착용·다인 탑승·인도 주행을 감지합니다.
         </p>
       </div>
       <div className={styles.contentGrid}>
@@ -110,19 +177,34 @@ function MainPage() {
               </svg>
               <div className={styles.streamInfo}>
                 <div className={styles.streamCamName}>CAM-01</div>
-                <div className={styles.streamCamSub}>단속 카메라 영상</div>
+                <div className={styles.streamCamSub}>분석 영상</div>
               </div>
             </div>
-            <div className={styles.streamBadges}>
-              {connected && (
-                <span className={styles.recordBadge}>
-                  <span className={styles.recordDot} /> 수신 중
-                </span>
+            <button
+              type="button"
+              className={styles.fullscreenBtn}
+              onClick={toggleFullscreen}
+              disabled={streamError}
+              aria-label={isFullscreen ? '전체화면 끝내기' : '영상 전체화면'}
+              title={isFullscreen ? '전체화면 끝내기 (Esc)' : '영상 전체화면'}
+            >
+              {isFullscreen ? (
+                // Lucide: minimize
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M8 3v3a2 2 0 0 1-2 2H3" /><path d="M21 8h-3a2 2 0 0 1-2-2V3" />
+                  <path d="M3 16h3a2 2 0 0 1 2 2v3" /><path d="M16 21v-3a2 2 0 0 1 2-2h3" />
+                </svg>
+              ) : (
+                // Lucide: maximize
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M8 3H5a2 2 0 0 0-2 2v3" /><path d="M21 8V5a2 2 0 0 0-2-2h-3" />
+                  <path d="M3 16v3a2 2 0 0 0 2 2h3" /><path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+                </svg>
               )}
-              <span className={styles.liveBadge}>실시간 분석 중</span>
-            </div>
+              전체화면
+            </button>
           </div>
-          <div className={styles.streamBody}>
+          <div className={styles.streamBody} ref={streamBodyRef}>
             {!streamError ? (
               <img
                 src={aiUrl(`/video/stream?t=${streamKey}`)}
@@ -160,10 +242,10 @@ function MainPage() {
             </div>
           </div>
 
-          {/* 실시간 알림 */}
+          {/* 최근 위반 목록 */}
           <div className={styles.sideCard}>
             <div className={styles.sideCardHeader}>
-              <span className={styles.sideCardTitle}>실시간 위반 알림</span>
+              <span className={styles.sideCardTitle}>최근 위반</span>
               {!sseConnected && (
                 <span className={`${styles.statusBadge} ${styles.statusBadgeWarn}`}>재연결 중</span>
               )}
@@ -177,15 +259,19 @@ function MainPage() {
             ) : (
               <ul className={styles.feedList}>
                 {violations.slice(0, FEED_MAX_COUNT).map((v) => (
-                  <li key={v.id} className={styles.feedItem}>
-                    <span
-                      className={styles.feedBadge}
-                      style={{ backgroundColor: TYPE_COLOR[v.type] || '#64748b' }}
-                    >
-                      {v.type}
-                    </span>
-                    <span className={styles.feedCamera}>{v.camera}</span>
-                    <span className={styles.feedTime}>{extractTime(v.timestamp)}</span>
+                  <li key={v.id}>
+                    <button type="button" className={styles.feedItem} onClick={() => setDetail(v)}>
+                      <span
+                        className={styles.feedBadge}
+                        style={{ backgroundColor: BADGE_COLOR[v.type]?.bg || '#f1f5f9', color: BADGE_COLOR[v.type]?.text || '#475569' }}
+                      >
+                        {v.type}
+                      </span>
+                      <span className={styles.feedCamera}>{v.camera}</span>
+                      <span className={styles.feedTime}>{extractTime(v.timestamp)}</span>
+                      {/* Lucide: chevron-right */}
+                      <svg className={styles.feedChevron} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -193,6 +279,8 @@ function MainPage() {
           </div>
         </div>
       </div>
+
+      {detail && <ViolationDetailModal violation={detail} onClose={closeDetail} />}
     </div>
   )
 }
