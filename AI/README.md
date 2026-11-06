@@ -64,7 +64,6 @@ AI/
 | `SOURCE` | `src/1.mp4` | 영상 입력 경로 |
 | `MODEL_PATH` | `src/best_v3.pt` | YOLO 모델 경로 |
 | `CONF` | `0.5` | 감지 신뢰도 임계값 |
-| `COOLDOWN` | `3.0` | 동일 객체 재알림 최소 간격 (초) |
 | `CAMERA_ID` | `CAM-01` | 카메라 식별자 |
 | `BACKEND_URL` | `http://localhost:8080/api/violations` | 위반 전송 대상 |
 
