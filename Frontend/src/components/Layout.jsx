@@ -1,4 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
+import { DEMO_MODE } from '../demo/demoMode';
 import styles from './Layout.module.css';
 
 const NAV_ITEMS = [
@@ -106,9 +107,8 @@ function Layout({ children }) {
             />
           </svg>
           <span className={styles.brandName}>
-            전동킥보드
-            <br />
-            단속 시스템
+            <span className={styles.brandTitle}>KickDan</span>
+            <span className={styles.brandSub}>전동킥보드 단속시스템</span>
           </span>
         </div>
         <nav className={styles.nav}>
@@ -126,6 +126,11 @@ function Layout({ children }) {
             );
           })}
         </nav>
+        {DEMO_MODE && (
+          <div className={styles.demoBadge} title="서버 대신 예시 데이터를 보여주는 중 (?demo=0 으로 끄기)">
+            데모 모드
+          </div>
+        )}
       </aside>
       <main className={styles.main}>{children}</main>
     </div>

@@ -126,17 +126,25 @@
   color: #374151;
 }
 
+/* 제목·설명 위치를 구역 설정 페이지와 맞춤 (설명 아래 여백 = 16px + header gap 20px = 36px) */
 .titleRow {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  margin-bottom: 16px;
+}
+
+.desc {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #64748b;
 }
 
 .title {
   font-size: 24px;
   font-weight: 700;
   color: #0f172a;
-  line-height: 1;
+  margin: 0;
 }
 
 .countBadge {

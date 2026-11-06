@@ -34,9 +34,9 @@ const TYPE_ICON = {
 }
 
 const TYPE_CONFIG = {
-  '헬멧 미착용': { color: '#0ea5e9', borderColor: '#bae6fd' },
-  '다인 탑승':   { color: '#f59e0b', borderColor: '#fde68a' },
-  '인도 주행':   { color: '#ec4899', borderColor: '#fbcfe8' },
+  '헬멧 미착용': { color: '#f59e0b', borderColor: '#fde68a' },
+  '다인 탑승':   { color: '#3b82f6', borderColor: '#bfdbfe' },
+  '인도 주행':   { color: '#ef4444', borderColor: '#fecaca' },
 }
 
 
@@ -95,6 +95,11 @@ function StatsPage() {
       {/* 헤더 */}
       <div className={styles.header}>
         <h2 className={styles.title}>단속 통계</h2>
+        <p className={styles.desc}>
+          누적 단속 기록을 위반 유형별·시간대별로 집계합니다.
+          <br />
+          위반이 많은 시간대를 확인해 집중 단속 시간을 정하는 데 활용할 수 있습니다.
+        </p>
       </div>
 
       <div className={styles.content}>
@@ -141,7 +146,9 @@ function StatsPage() {
               </div>
               <ResponsiveContainer width="100%" height={110} style={{ marginTop: '-8px' }}>
                 <PieChart>
-                  <Pie data={typeData} cx="50%" cy="50%" innerRadius={34} outerRadius={55} paddingAngle={3} dataKey="value">
+                  {/* 애니메이션을 끔: recharts Pie는 다시 렌더링될 때마다(3초 폴링 등) 애니메이션을
+                      처음부터 다시 시작해서, 타이밍에 따라 몇 초 동안 빈 차트로 보이는 문제가 있었음 */}
+                  <Pie data={typeData} cx="50%" cy="50%" innerRadius={34} outerRadius={55} paddingAngle={3} dataKey="value" isAnimationActive={false}>
                     {typeData.map(({ name }) => (
                       <Cell key={name} fill={TYPE_CONFIG[name].color} />
                     ))}
@@ -187,9 +194,9 @@ function StatsPage() {
                 <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                 <Tooltip />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar dataKey="헬멧 미착용" stackId="a" fill="#0ea5e9" radius={[0, 0, 0, 0]} />
-                <Bar dataKey="다인 탑승"   stackId="a" fill="#f59e0b" />
-                <Bar dataKey="인도 주행"   stackId="a" fill="#ec4899" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="헬멧 미착용" stackId="a" fill="#f59e0b" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="다인 탑승"   stackId="a" fill="#3b82f6" />
+                <Bar dataKey="인도 주행"   stackId="a" fill="#ef4444" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           )}

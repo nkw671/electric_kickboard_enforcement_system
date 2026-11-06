@@ -6,9 +6,9 @@ import { toViolationList } from '../utils'
 import styles from './ViolationsPage.module.css'
 
 const MODAL_BADGE = {
-  '헬멧 미착용': { bg: '#e0f2fe', text: '#0369a1', border: '#bae6fd' },
-  '다인 탑승':   { bg: '#fef3c7', text: '#b45309', border: '#fde68a' },
-  '인도 주행':   { bg: '#fce7f3', text: '#be185d', border: '#fbcfe8' },
+  '헬멧 미착용': { bg: '#fef3c7', text: '#b45309', border: '#fde68a' },
+  '다인 탑승':   { bg: '#dbeafe', text: '#1d4ed8', border: '#bfdbfe' },
+  '인도 주행':   { bg: '#fee2e2', text: '#b91c1c', border: '#fecaca' },
 }
 
 const TYPE_ICON = {
@@ -57,6 +57,8 @@ function ViolationsPage() {
   const [endDate, setEndDate] = useState('')
   const [page, setPage] = useState(1)
   const [selected, setSelected] = useState(null)
+  // 불러오지 못한 이미지 주소. 이미지는 AI 서버(vast.ai)에 있어서 서버가 꺼져 있으면 깨진다.
+  const [brokenImageUrl, setBrokenImageUrl] = useState(null)
 
   // limit(기존)과 size(페이지네이션 적용 후)를 같이 보냄 — 백엔드 머지 후 limit 제거
   const { data: apiData, loading, error } = useApi(apiUrl('/api/violations?limit=9999&size=9999'))
@@ -107,6 +109,11 @@ function ViolationsPage() {
       <div className={styles.header}>
         <div className={styles.titleRow}>
           <h2 className={styles.title}>단속 기록</h2>
+          <p className={styles.desc}>
+            AI가 감지한 위반 기록을 최신순으로 보여줍니다. 날짜와 위반 유형으로 걸러 볼 수 있습니다.
+            <br />
+            기록을 누르면 캡처 이미지와 AI 분석 신뢰도 등 상세 정보를 확인할 수 있습니다.
+          </p>
         </div>
 
         <div className={styles.filterPanel}>
@@ -276,15 +283,20 @@ function ViolationsPage() {
             </div>
 
             <div className={styles.modalImageWrap}>
-              {selected.image_url ? (
-                <img src={selected.image_url} alt="위반 단속 이미지" className={styles.modalImage} />
+              {selected.image_url && selected.image_url !== brokenImageUrl ? (
+                <img
+                  src={selected.image_url}
+                  alt="위반 단속 이미지"
+                  className={styles.modalImage}
+                  onError={() => setBrokenImageUrl(selected.image_url)}
+                />
               ) : (
                 <div className={styles.modalImagePlaceholder}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 40, height: 40 }}>
                     <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/>
                     <polyline points="21 15 16 10 5 21"/>
                   </svg>
-                  캡처 이미지 없음
+                  {selected.image_url ? '이미지를 불러올 수 없습니다 (AI 서버 연결 확인)' : '캡처 이미지 없음'}
                 </div>
               )}
               {MODAL_BADGE[selected.type] && (

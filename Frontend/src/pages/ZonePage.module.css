@@ -6,12 +6,27 @@
   gap: 20px;
 }
 
+.header {
+  padding-bottom: 16px;
+}
+
 .title {
   font-size: 24px;
   font-weight: 700;
   color: #0f172a;
   margin: 0;
-  padding-bottom: 16px;
+}
+
+.desc {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #64748b;
+}
+
+.desc strong {
+  color: #0f172a;
+  font-weight: 600;
 }
 
 .layout {
@@ -163,7 +178,20 @@
   border: 1px solid #e2e8f0;
 }
 
-.btnGhost:hover { background-color: #f1f5f9; }
+.btnGhost:hover:not(:disabled) { background-color: #f1f5f9; }
+.btnGhost:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* 버튼 안 단축키 표시 */
+.kbd {
+  padding: 1px 5px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  background-color: #f8fafc;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  color: #94a3b8;
+}
 
 /* 사이드 패널 */
 .panel {
@@ -299,3 +327,70 @@
 
 .btnDelete:hover:not(:disabled) { background-color: #fee2e2; }
 .btnDelete:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* 초록색 완성 버튼 위의 단축키 표시 */
+.kbdOnDark {
+  padding: 1px 5px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* 삭제 확인 팝업 */
+.dialogOverlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(15, 23, 42, 0.45);
+  z-index: 400;
+}
+
+.dialog {
+  width: min(380px, calc(100vw - 32px));
+  padding: 22px 22px 18px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 20, 60, 0.2);
+}
+
+.dialogTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.dialogMessage {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #64748b;
+}
+
+.dialogActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.btnDanger {
+  display: flex;
+  align-items: center;
+  padding: 7px 16px;
+  border: none;
+  border-radius: 8px;
+  background-color: #dc2626;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btnDanger:hover { background-color: #b91c1c; }
