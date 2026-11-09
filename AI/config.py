@@ -2,7 +2,7 @@ import cv2
 import os
 #전역설정
 SOURCE          = "src/lowAngle_60fps.mp4"
-MODEL_PATH      = "src/final_s.pt"
+MODEL_PATH      = "src/real_final_s.pt"
 CONF            = 0.2    # 낮은 신뢰도 검출까지 ByteTrack 에 전달 → 2단계 연관으로 깜박임 방지
 HELMET_CONF     = 0.4    # helmet_O / helmet_X 전용 최소 신뢰도
 SUSTAIN          = 1.5   # 위반이 단속으로 인정되기 위한 최소 연속 지속 시간 (초)
@@ -12,8 +12,9 @@ CAMERA_ID       = "CAM-01"
 VIOLATION_DIR   = "violations"
 BACKEND_URL     = os.environ.get("BACKEND_URL", "http://localhost:8080/api/violations")   # 배포 시 환경변수로 재정의
 AI_BASE_URL     = os.environ.get("AI_BASE_URL", "http://localhost:8000")   # 배포 시 환경변수로 재정의
-ENCODE_PARAMS      = [cv2.IMWRITE_JPEG_QUALITY, 50]   # JPEG 인코딩 파라미터 (터널 대역폭 절약을 위해 65->50)
-STREAM_INTERVAL    = float(os.environ.get("STREAM_INTERVAL", 0.05))   # MJPEG 스트림 프레임 간격 (초) — 배포 시 환경변수로 재정의
+ENCODE_PARAMS      = [cv2.IMWRITE_JPEG_QUALITY, 50]   # JPEG 인코딩 파라미터 (터널 제거 후 화질 우선으로 40->50)
+STREAM_SIZE        = (960, 544)   # MJPEG 전송 해상도 (width, height) — 추론·Zone 좌표는 INFER_SIZE 기준을 유지하고 API 에서 변환
+STREAM_INTERVAL    = float(os.environ.get("STREAM_INTERVAL", 0.033))   # MJPEG 스트림 프레임 간격 (초) — 배포 시 환경변수로 재정의
 EMA_ALPHA          = 0.9  # EMA 스무딩 계수 (높을수록 현재 프레임 반영 비중 증가)
 MIN_CONFIRM_FRAMES = 4     # 화면에 표시하기 위한 최소 연속 감지 프레임 수
 COAST_MAX_FRAMES   = 1     # 검출이 빠진 확정 트랙의 마지막 박스를 유지할 최대 프레임 수 (coasting)
