@@ -234,6 +234,7 @@ class DetectionLoop:
                     # 위반 판정을 수행한다.
                     self.decider.check(frame, boxes, labels, confs, ids)
 
-            # 프레임을 JPEG 로 인코딩하여 스트리밍용 전역 변수에 저장한다.
-            _, buf = cv2.imencode(".jpg", frame, config.ENCODE_PARAMS)
+            # 전송 해상도로 축소 후 JPEG 로 인코딩하여 스트리밍용 전역 변수에 저장한다.
+            stream_frame = cv2.resize(frame, config.STREAM_SIZE, interpolation=cv2.INTER_AREA)
+            _, buf = cv2.imencode(".jpg", stream_frame, config.ENCODE_PARAMS)
             config.latest_frame = buf.tobytes()

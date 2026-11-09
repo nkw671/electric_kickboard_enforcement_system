@@ -37,4 +37,5 @@ if __name__ == "__main__":
     Thread(target=loop.run, daemon=True).start()
 
     port = int(os.environ.get("PORT", 8000))   # 배포 시 환경변수로 재정의
-    uvicorn.run(api.app, host="0.0.0.0", port=port)
+    host = os.environ.get("HOST", "0.0.0.0")   # 프록시 뒤에서 실행할 때 127.0.0.1 로 재정의
+    uvicorn.run(api.app, host=host, port=port)

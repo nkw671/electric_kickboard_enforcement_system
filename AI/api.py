@@ -18,8 +18,9 @@ import config
 #                  send_violation()    - 위반 정보를 전송 큐에 적재 (논블로킹)
 #                  _send_worker()      - 큐의 payload 를 단일 클라이언트로 순차 전송 (워커 스레드)
 #                  video_stream()      - latest_frame 을 MJPEG 형식으로 실시간 스트리밍
-#                  get_zones()         - 현재 설정된 Zone 목록 반환
-#                  set_zones()         - React 캔버스에서 그린 Zone 목록을 받아 저장
+#                  _scale_pts()        - Zone 꼭짓점을 다른 해상도 좌표계로 변환
+#                  get_zones()         - 현재 설정된 Zone 목록을 전송 해상도 좌표로 반환
+#                  set_zones()         - React 캔버스에서 그린 Zone 목록을 추론 해상도 좌표로 변환해 저장
 #                  delete_zones()      - 모든 Zone 초기화 후 파일 갱신
 #                  get_alerts()        - 누적된 위반 알림 목록 반환
 class ConnectAPI:
@@ -110,43 +111,66 @@ class ConnectAPI:
 
     # 함수 이름 : video_stream()
     # 기능      : config.latest_frame 을 MJPEG 형식으로 실시간 스트리밍한다.
+    #             새 프레임이 없으면 전송을 건너뛰어 같은 화면에 대역폭을 쓰지 않는다.
     # 파라미터  : 없음
     # 반환값    : StreamingResponse (multipart/x-mixed-replace)
     async def video_stream(self):
         async def generate():
+            last_sent = None                        # 이 연결에 마지막으로 보낸 프레임
             while True:
-                if config.latest_frame:
+                frame = config.latest_frame
+                if frame and frame is not last_sent:
                     yield (
                         b"--frame\r\n"
                         b"Content-Type: image/jpeg\r\n\r\n"
-                        + config.latest_frame +
+                        + frame +
                         b"\r\n"
                     )
+                    last_sent = frame
                 await asyncio.sleep(config.STREAM_INTERVAL)
         return StreamingResponse(
             generate(),
             media_type="multipart/x-mixed-replace; boundary=frame"
         )
 
+    # 함수 이름 : _scale_pts()
+    # 기능      : Zone 꼭짓점을 한 해상도의 좌표계에서 다른 해상도의 좌표계로 변환한다.
+    # 파라미터  : list  pts -> 꼭짓점 목록 [[x,y], ...]
+    #             tuple src -> 현재 좌표계 해상도 (width, height)
+    #             tuple dst -> 변환할 좌표계 해상도 (width, height)
+    # 반환값    : list -> 변환된 꼭짓점 목록 [[x,y], ...]
+    @staticmethod
+    def _scale_pts(pts: list, src: tuple, dst: tuple) -> list:
+        sx, sy = dst[0] / src[0], dst[1] / src[1]
+        return [[round(x * sx), round(y * sy)] for x, y in pts]
+
     # 함수 이름 : get_zones()
-    # 기능      : 현재 설정된 Zone 목록을 반환한다.
+    # 기능      : 현재 설정된 Zone 목록을 프론트가 보는 전송 해상도 좌표로 변환해 반환한다.
     # 파라미터  : 없음
     # 반환값    : {"zones": [...]}
     async def get_zones(self):
         return {
             "zones": [
-                {"name": z["name"], "pts": z["pts"], "color": list(z["color"])}
+                {
+                    "name":  z["name"],
+                    "pts":   self._scale_pts(z["pts"], config.INFER_SIZE, config.STREAM_SIZE),
+                    "color": list(z["color"]),
+                }
                 for z in self.drawer.zones
             ]
         }
 
     # 함수 이름 : set_zones()
-    # 기능      : React 캔버스에서 그린 Zone 목록을 받아 ZoneDrawer 에 저장한다.
+    # 기능      : React 캔버스에서 그린 Zone 목록을 추론 해상도 좌표로 변환해 ZoneDrawer 에 저장한다.
     #             Zone 변환 로직은 ZoneDrawer.set_zones() 에서 처리한다. (SRP)
     # 파라미터  : body = {"zones": [{"name": str, "pts": [[x,y],...], "color": [B,G,R]}, ...]}
     # 반환값    : {"saved": Zone 개수}
     async def set_zones(self, body: dict):
-        self.drawer.set_zones(body.get("zones", []))
+        zones = [
+            {**z, "pts": self._scale_pts(z["pts"], config.STREAM_SIZE, config.INFER_SIZE)}
+            for z in body.get("zones", [])
+        ]
+        self.drawer.set_zones(zones)
         return {"saved": len(self.drawer.zones)}
 
     # 함수 이름 : delete_zones()
