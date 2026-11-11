@@ -8,8 +8,8 @@ import ViolationDetailModal from '../components/ViolationDetailModal'
 import styles from './MainPage.module.css'
 
 function MainPage() {
-  // limit(기존)과 size(페이지네이션 적용 후)를 같이 보냄 — 백엔드 머지 후 limit 제거
-  const { data, loading, error, connected } = useApi(apiUrl('/api/violations?limit=10&size=10'))
+  // 최근 위반 10건 (Spring Page의 첫 페이지, 최신순)
+  const { data, loading, error, connected } = useApi(apiUrl('/api/violations?size=10'))
   const violations = toViolationList(data)
 
   const [toast, setToast] = useState(null)
