@@ -91,8 +91,10 @@ function ViolationsPage() {
   const [selected, setSelected] = useState(null)
   const closeDetail = useCallback(() => setSelected(null), [])
 
-  // limit(기존)과 size(페이지네이션 적용 후)를 같이 보냄 — 백엔드 머지 후 limit 제거
-  const { data: apiData, loading, error } = useApi(apiUrl('/api/violations?limit=9999&size=9999'))
+  // 백엔드 /api/violations에 날짜 조건(startDate/endDate)이 없어서, 기록을 받아 날짜·유형 필터와
+  // 페이지 나누기를 브라우저에서 한다. 백엔드에 날짜 조건이 생기면 page/size/type/startDate/endDate를
+  // 서버로 넘기도록 바꿀 것.
+  const { data: apiData, loading, error } = useApi(apiUrl('/api/violations?size=9999'))
   const violations = useMemo(() => toViolationList(apiData), [apiData])
   // 달력 아이콘을 눌러도 시작 날짜 달력이 열리도록 (시작 날짜 버튼을 대신 눌러줌)
   const startButtonRef = useRef(null)
