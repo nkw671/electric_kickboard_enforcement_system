@@ -48,24 +48,49 @@ function MainPage() {
   const [streamKey, setStreamKey] = useState(0)
   const streamAttemptRef = useRef(0)
   const streamRetryTimerRef = useRef(null)
+  const streamProbeRef = useRef(null)
 
-  // 수동 재연결: 즉시 다시 시도하고 백오프 카운트를 리셋한다.
-  const retryStream = () => {
-    clearTimeout(streamRetryTimerRef.current)
-    streamAttemptRef.current = 0
-    setStreamError(false)
-    setStreamKey(k => k + 1)
+  // 재연결 확인: 안내 문구는 그대로 둔 채 뒤에서 스트림 주소에 접속해 보고, 응답이 정상일 때만 영상으로 바꾼다.
+  // (바로 <img>로 바꾸면 실패할 때마다 빈 영상 ↔ 안내 문구가 번갈아 보여 화면이 깜빡이고,
+  //  재시도 간격이 1s -> 2s -> 4s ... 로 늘어나 깜빡임 간격도 점점 길어진다)
+  const probeStream = async () => {
+    const controller = new AbortController()
+    streamProbeRef.current = controller
+    try {
+      const res = await fetch(aiUrl('/video/stream'), { signal: controller.signal })
+      controller.abort() // 응답 헤더만 확인하고 스트림 본문은 받지 않는다
+      // 영상(MJPEG) 또는 이미지(데모 모드)일 때만 성공. 서버가 HTML 등을 200으로 돌려주는 경우는 실패로 본다.
+      const type = res.headers.get('content-type') || ''
+      if (res.ok && (type.startsWith('multipart/') || type.startsWith('image/'))) {
+        setStreamError(false)
+        setStreamKey(k => k + 1)
+        return
+      }
+    } catch (err) {
+      if (err.name === 'AbortError') return // 페이지를 떠나며 취소됨
+    }
+    scheduleStreamRetry()
   }
 
-  // 스트림이 끊기면 지수 백오프(1s -> 2s -> ... 최대 30s)로 자동 재연결한다.
-  const handleStreamError = () => {
-    setStreamError(true)
+  // 지수 백오프(1s -> 2s -> ... 최대 30s)로 다음 재연결 확인을 예약한다.
+  const scheduleStreamRetry = () => {
     const delay = Math.min(1000 * 2 ** streamAttemptRef.current, 30000)
     streamAttemptRef.current += 1
-    streamRetryTimerRef.current = setTimeout(() => {
-      setStreamError(false)
-      setStreamKey(k => k + 1)
-    }, delay)
+    streamRetryTimerRef.current = setTimeout(probeStream, delay)
+  }
+
+  // 수동 재연결: 즉시 다시 확인하고 백오프 카운트를 리셋한다.
+  const retryStream = () => {
+    clearTimeout(streamRetryTimerRef.current)
+    streamProbeRef.current?.abort()
+    streamAttemptRef.current = 0
+    probeStream()
+  }
+
+  // 스트림이 끊기면 안내 문구를 띄우고 자동 재연결을 시작한다.
+  const handleStreamError = () => {
+    setStreamError(true)
+    scheduleStreamRetry()
   }
 
   const handleStreamLoad = () => {
@@ -73,7 +98,10 @@ function MainPage() {
   }
 
   useEffect(() => {
-    return () => clearTimeout(streamRetryTimerRef.current)
+    return () => {
+      clearTimeout(streamRetryTimerRef.current)
+      streamProbeRef.current?.abort()
+    }
   }, [])
 
   useEffect(() => {
