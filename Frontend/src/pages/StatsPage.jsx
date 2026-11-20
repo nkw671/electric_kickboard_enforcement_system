@@ -37,14 +37,18 @@ function stackSegment(dataKey) {
 const SEGMENT_SHAPE = Object.fromEntries(STACK_ORDER.map(k => [k, stackSegment(k)]))
 
 
+// 기록 전체(size=9999)를 받는 무거운 요청이라 30초마다 갱신한다. 페이지에 들어올 때는 바로 불러오고,
+// 실시간 알림은 모니터링 페이지(3초 + SSE)가 맡는다. 두 요청을 같은 간격으로 둬서 숫자가 어긋나지 않게 한다.
+const POLL_INTERVAL = 30000
+
 function StatsPage() {
   // 요약 카드/파이 차트는 서버가 집계해주는 /api/stats를 그대로 쓴다.
   // /api/stats: 백엔드 머지 후에는 { overall: {...} }, 그 전에는 평탄한 객체 — 둘 다 지원
-  const { data: statsData, loading: statsLoading, error: statsError } = useApi(apiUrl('/api/stats'))
+  const { data: statsData, loading: statsLoading, error: statsError } = useApi(apiUrl('/api/stats'), POLL_INTERVAL)
   const overall = statsData?.overall ?? statsData
   // 백엔드 /api/stats의 hourly는 유형 구분 없이 시간대별 합계만 줘서, 유형별 누적 막대를 위해
   // 전체 기록을 받아 직접 집계한다. 백엔드가 hourly에 유형별 건수를 넣어주면 stats.hourly로 교체할 것.
-  const { data: apiData, loading: violationsLoading, error: violationsError } = useApi(apiUrl('/api/violations?size=9999'))
+  const { data: apiData, loading: violationsLoading, error: violationsError } = useApi(apiUrl('/api/violations?size=9999'), POLL_INTERVAL)
   const violations = useMemo(() => toViolationList(apiData), [apiData])
 
   // 두 API 중 하나만 실패하면 그 데이터를 쓰는 카드에만 에러를 표시한다.

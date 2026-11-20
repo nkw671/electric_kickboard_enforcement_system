@@ -83,6 +83,10 @@ const ITEMS_PER_PAGE = 10
 // 페이지 버튼을 5개씩 묶어서 보여준다. 예: « ‹ 11 12 [13] 14 15 › »
 const PAGE_BLOCK = 5
 
+// 기록 전체(size=9999)를 받는 무거운 요청이라 30초마다 갱신한다. 페이지에 들어올 때는 바로 불러오고,
+// 실시간 알림은 모니터링 페이지(3초 + SSE)가 맡는다.
+const POLL_INTERVAL = 30000
+
 function ViolationsPage() {
   const [filter, setFilter] = useState('전체')
   const [startDate, setStartDate] = useState('')
@@ -94,7 +98,7 @@ function ViolationsPage() {
   // 백엔드 /api/violations에 날짜 조건(startDate/endDate)이 없어서, 기록을 받아 날짜·유형 필터와
   // 페이지 나누기를 브라우저에서 한다. 백엔드에 날짜 조건이 생기면 page/size/type/startDate/endDate를
   // 서버로 넘기도록 바꿀 것.
-  const { data: apiData, loading, error } = useApi(apiUrl('/api/violations?size=9999'))
+  const { data: apiData, loading, error } = useApi(apiUrl('/api/violations?size=9999'), POLL_INTERVAL)
   const violations = useMemo(() => toViolationList(apiData), [apiData])
   // 달력 아이콘을 눌러도 시작 날짜 달력이 열리도록 (시작 날짜 버튼을 대신 눌러줌)
   const startButtonRef = useRef(null)
